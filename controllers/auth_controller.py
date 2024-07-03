@@ -9,7 +9,7 @@ from starlette import status
 import auth
 from auth import CreateUserRequest, hash_password, Token, authenticate_user, \
     create_access_token
-from models import User
+from models import User, Address
 from utils.utils import get_db
 
 router = APIRouter(
@@ -33,16 +33,21 @@ async def register(db: db_dependency,
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail='Invalid email address')
 
+    new_address = Address(**create_user_request.address.dict())
+    db.add(new_address)
+    db.flush()
+
     create_user_model = User(
         username=create_user_request.username,
         password_hash=hash_password(create_user_request.password),
         email=create_user_request.email,
-        last_login_date=datetime.now()
+        last_login_date=datetime.now(),
+        address=new_address
     )
 
     db.add(create_user_model)
     db.commit()
-
+    db.refresh(create_user_model)
     return {'message': 'User registered successfully'}
 
 
