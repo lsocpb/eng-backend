@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 
-from controllers import auth_controller
-import uvicorn
+from controllers import auth_controller, user_controller
 from starlette.middleware.cors import CORSMiddleware
-from database import engine
-import models
+from db_management.database import engine
+from db_management import models
 
 app = FastAPI()
 app.include_router(auth_controller.router)
+app.include_router(user_controller.router)
 
 origins = [
     "*"

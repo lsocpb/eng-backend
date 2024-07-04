@@ -9,7 +9,7 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 from starlette import status
 
-from models import User
+from db_management.models import User
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -31,6 +31,7 @@ class CreateUserRequest(BaseModel):
     username: str
     password: str
     email: str
+    phone: str
     address: AddressRequestCreate
 
 
