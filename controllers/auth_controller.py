@@ -10,6 +10,7 @@ from response_models.auth_responses import CreateUserRequest, hash_password, Tok
     create_access_token
 from db_management.models import User, Address
 from utils.utils import get_db
+import response_models.auth_responses as auth
 
 router = APIRouter(
     prefix="/auth",
@@ -58,6 +59,8 @@ async def login_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Dep
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail='Could not validate credentials')
     token = create_access_token(user.username, user.id, timedelta(minutes=6000))
+
+
 
     return {'access_token': token, 'token_type': 'bearer'}
 

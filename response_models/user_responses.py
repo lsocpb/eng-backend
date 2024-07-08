@@ -10,4 +10,9 @@ class AddressResponse(BaseModel):
 class ProfileResponse(BaseModel):
     username: str
     email: str
+    profile_image_url: str
     address: AddressResponse
+
+
+class ImageUploadResponse(BaseModel):
+    image_url: str

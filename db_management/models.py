@@ -14,6 +14,7 @@ class User(Base):
     last_login_date = Column(DateTime, nullable=False)
     address_id = Column(Integer, ForeignKey('address.id'), nullable=False)
     address = relationship('Address')
+    profile_image_url = Column(String(255), nullable=True)
 
 class Category(Base):
     __tablename__ = 'category'
