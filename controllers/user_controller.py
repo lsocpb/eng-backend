@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from response_models.auth_responses import validate_jwt
 from db_management.models import User
-from response_models.user_responses import ProfileResponse, AddressResponse, ImageUploadResponse
+from response_models.user_responses import ProfileResponse, AddressResponse
 from utils.utils import get_db
 
 import cloudinary.uploader

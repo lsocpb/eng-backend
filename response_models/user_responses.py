@@ -12,7 +12,3 @@ class ProfileResponse(BaseModel):
     email: str
     profile_image_url: str
     address: AddressResponse
-
-
-class ImageUploadResponse(BaseModel):
-    image_url: str

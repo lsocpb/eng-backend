@@ -60,8 +60,6 @@ async def login_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Dep
                             detail='Could not validate credentials')
     token = create_access_token(user.username, user.id, timedelta(minutes=6000))
 
-
-
     return {'access_token': token, 'token_type': 'bearer'}
 
 
