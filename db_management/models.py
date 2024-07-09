@@ -1,7 +1,7 @@
 from sqlalchemy.orm import relationship
 
 from db_management.database import Base
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL
 
 
 class User(Base):
@@ -32,3 +32,24 @@ class Address(Base):
     street = Column(String(255), nullable=False)
     city = Column(String(255), nullable=False)
     zip = Column(String(255), nullable=False)
+
+
+class Product(Base):
+    __tablename__ = 'product'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(String(255), nullable=False)
+    price = Column(DECIMAL, nullable=False)
+    category_id = Column(Integer, ForeignKey('category.id'), nullable=False)
+    category = relationship('Category')
+    status = Column(String(255), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    seller_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    seller = relationship('User')
+    buyer_id = Column(Integer, ForeignKey('user.id'), nullable=True)
+    buyer = relationship('User')
+    image_url_1 = Column(String(255), nullable=True)
+    image_url_2 = Column(String(255), nullable=True)
+    image_url_3 = Column(String(255), nullable=True)
