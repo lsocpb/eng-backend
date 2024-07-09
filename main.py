@@ -4,7 +4,7 @@ from cloudinary import config
 from dotenv import load_dotenv
 import os
 
-from controllers import auth_controller, user_controller, category_controller
+from controllers import auth_controller, user_controller, category_controller, product_controller
 from starlette.middleware.cors import CORSMiddleware
 from db_management.database import engine
 from db_management import models
@@ -13,6 +13,8 @@ app = FastAPI()
 app.include_router(auth_controller.router)
 app.include_router(user_controller.router)
 app.include_router(category_controller.router)
+app.include_router(product_controller.router)
+
 
 origins = [
     "*"
