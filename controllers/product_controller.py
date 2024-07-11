@@ -3,7 +3,7 @@ from typing import Annotated, Optional
 
 import cloudinary.uploader
 
-from response_models.product_responses import ProductAddResponse
+from response_models.product_responses import ProductGetResponse
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, Form, File
 from sqlalchemy.orm import Session
@@ -64,3 +64,12 @@ async def add_product(
     db.commit()
     db.refresh(db_product)
     return {"message": "Product added successfully"}
+
+
+@router.get("/get", status_code=status.HTTP_200_OK)
+async def get_product(db: db_dependency, product_id: int = Query(..., description="The ID of the product to fetch")):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+
+    return {"product": product}
