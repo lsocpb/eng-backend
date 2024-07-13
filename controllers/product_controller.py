@@ -1,14 +1,14 @@
 from datetime import date, datetime
-from typing import Annotated, Optional
+from typing import Annotated, Optional, Dict, Any
 
 import cloudinary.uploader
 
 from response_models.product_responses import ProductGetResponse
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, Form, File
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
-from db_management.models import Product
+from db_management.models import Product, User
 
 from utils.utils import get_db
 from response_models.auth_responses import validate_jwt
@@ -67,9 +67,30 @@ async def add_product(
 
 
 @router.get("/get", status_code=status.HTTP_200_OK)
-async def get_product(db: db_dependency, product_id: int = Query(..., description="The ID of the product to fetch")):
-    product = db.query(Product).filter(Product.id == product_id).first()
+async def get_product(db: db_dependency, product_id: int = Query(..., description="The ID of the product to fetch"))\
+        -> Dict[str, Any]:
+    product = db.query(Product).options(joinedload(Product.seller)).filter(Product.id == product_id).first()
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
-    return {"product": product}
+    product_data = {
+        "name": product.name,
+        "description": product.description,
+        "price": product.price,
+        "status": product.status,
+        "category_id": product.category_id,
+        "image_url_1": product.image_url_1,
+        "image_url_2": product.image_url_2,
+        "image_url_3": product.image_url_3,
+        "quantity": product.quantity,
+        "end_date": product.end_date,
+        "buyer_id": product.buyer_id,
+        "seller": {
+            "id": product.seller.id,
+            "username": product.seller.username,
+            "email": product.seller.email,
+            "profile_image_url": product.seller.profile_image_url
+        },
+    }
+
+    return {"product": product_data}

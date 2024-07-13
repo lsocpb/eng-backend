@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -10,5 +12,5 @@ class AddressResponse(BaseModel):
 class ProfileResponse(BaseModel):
     username: str
     email: str
-    profile_image_url: str
+    profile_image_url: Optional[str]
     address: AddressResponse
