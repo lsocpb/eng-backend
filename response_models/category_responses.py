@@ -5,3 +5,4 @@ class CategoryAddResponse(BaseModel):
     name: str
     description: str
     status: str
+    icon: str

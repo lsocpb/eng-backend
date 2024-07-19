@@ -58,7 +58,8 @@ async def add_product(
         category_id=category_id,
         image_url_1=image_url_1,
         image_url_2=image_url_2,
-        image_url_3=image_url_3
+        image_url_3=image_url_3,
+        created_at=datetime.now()
     )
     db.add(db_product)
     db.commit()
@@ -94,3 +95,44 @@ async def get_product(db: db_dependency, product_id: int = Query(..., descriptio
     }
 
     return {"product": product_data}
+
+
+@router.get("/fetch/last", status_code=status.HTTP_200_OK)
+async def get_last_products(db: db_dependency):
+    products = db.query(Product).order_by(Product.created_at.desc()).limit(5).all()
+    return {"products": products}
+
+
+@router.get("/by-category/{category_id}", status_code=status.HTTP_200_OK)
+async def get_product_by_category(
+    db: db_dependency,
+    category_id: int,
+    skip: int = Query(0, description="Number of products to skip"),
+    limit: int = Query(10, description="Number of products to return")
+) -> Dict[str, Any]:
+    products = db.query(Product)\
+        .filter(Product.category_id == category_id)\
+        .order_by(Product.created_at.desc())\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
+
+    if not products:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No products found for this category")
+
+    product_list = []
+    for product in products:
+        product_data = {
+            "id": product.id,
+            "name": product.name,
+            "description": product.description,
+            "price": product.price,
+            "status": product.status,
+            "image_url_1": product.image_url_1,
+            "quantity": product.quantity,
+            "end_date": product.end_date,
+            "seller_id": product.seller_id
+        }
+        product_list.append(product_data)
+
+    return {"products": product_list}

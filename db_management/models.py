@@ -11,6 +11,7 @@ class Category(Base):
     name = Column(String(255), unique=True, nullable=False)
     description = Column(String(255), nullable=False)
     status = Column(String(255), nullable=False)
+    icon = Column(String(255), nullable=True)
 
 
 class Address(Base):
@@ -34,6 +35,7 @@ class Product(Base):
     status = Column(String(255), nullable=False)
     quantity = Column(Integer, nullable=False)
     end_date = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, nullable=False)
     image_url_1 = Column(String(255), nullable=True)
     image_url_2 = Column(String(255), nullable=True)
     image_url_3 = Column(String(255), nullable=True)
