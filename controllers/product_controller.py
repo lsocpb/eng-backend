@@ -64,7 +64,7 @@ async def add_product(
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
-    return {"message": "Product added successfully"}
+    return {"message": "Product added successfully", "product_id": db_product.id}
 
 
 @router.get("/get", status_code=status.HTTP_200_OK)
@@ -98,9 +98,37 @@ async def get_product(db: db_dependency, product_id: int = Query(..., descriptio
 
 
 @router.get("/fetch/last", status_code=status.HTTP_200_OK)
-async def get_last_products(db: db_dependency):
-    products = db.query(Product).order_by(Product.created_at.desc()).limit(5).all()
-    return {"products": products}
+async def get_last_products(db: Session = Depends(get_db)):
+    products = (
+        db.query(Product)
+        .options(joinedload(Product.category))
+        .options(joinedload(Product.seller))
+        .order_by(Product.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
+    result = []
+    for product in products:
+        days_left = (product.end_date - datetime.now()).days
+
+        result.append({
+            "id": product.id,
+            "name": product.name,
+            "description": product.description,
+            "price": float(product.price),
+            "image_url_1": product.image_url_1,
+            "category_id": product.category_id,
+            "category_name": product.category.name if product.category else None,
+            "seller_name": product.seller.username if product.seller else "Anonymous",
+            "seller_avatar": product.seller.profile_image_url if product.seller else None,
+            "bid_count": product.quantity,
+            "days_left": max(days_left, 0),
+            "is_new": (datetime.now() - product.created_at).days < 7,
+            "status": product.status
+        })
+
+    return {"products": result}
 
 
 @router.get("/by-category/{category_id}", status_code=status.HTTP_200_OK)
