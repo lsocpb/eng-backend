@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from response_models.auth_responses import validate_jwt
 from db_management.models import User
 from response_models.user_responses import ProfileResponse, AddressResponse
-from utils.utils import get_db
+from utils.utils import get_db, validate_image
 
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
@@ -40,6 +40,8 @@ async def get_user_info(user: user_dependency, db: db_dependency):
 @router.post("/upload_profile_image", status_code=status.HTTP_200_OK)
 async def upload_profile_image(user: user_dependency, db: db_dependency, file: UploadFile = File(...)):
     try:
+        validate_image(file)
+
         result = cloudinary.uploader.upload(file.file)
         image_url = result.get('url')
 

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from db_management.models import Product, User
 
-from utils.utils import get_db
+from utils.utils import get_db, validate_image
 from response_models.auth_responses import validate_jwt
 
 router = APIRouter(
@@ -37,34 +37,43 @@ async def add_product(
     image3: UploadFile = File(...),
     status: Optional[str] = Form("active")
 ):
-    result_image1 = cloudinary.uploader.upload(image1.file)
-    result_image2 = cloudinary.uploader.upload(image2.file)
-    result_image3 = cloudinary.uploader.upload(image3.file)
+    try:
+        validate_image(image1)
+        validate_image(image2)
+        validate_image(image3)
 
-    image_url_1 = result_image1.get('url')
-    image_url_2 = result_image2.get('url')
-    image_url_3 = result_image3.get('url')
+        result_image1 = cloudinary.uploader.upload(image1.file)
+        result_image2 = cloudinary.uploader.upload(image2.file)
+        result_image3 = cloudinary.uploader.upload(image3.file)
 
-    end_date_datetime = datetime.fromtimestamp(end_date / 1000)
+        image_url_1 = result_image1.get('url')
+        image_url_2 = result_image2.get('url')
+        image_url_3 = result_image3.get('url')
 
-    db_product = Product(
-        name=name,
-        description=description,
-        price=price,
-        status=status,
-        quantity=quantity,
-        end_date=end_date_datetime,
-        seller_id=user['id'],
-        category_id=category_id,
-        image_url_1=image_url_1,
-        image_url_2=image_url_2,
-        image_url_3=image_url_3,
-        created_at=datetime.now()
-    )
-    db.add(db_product)
-    db.commit()
-    db.refresh(db_product)
-    return {"message": "Product added successfully", "product_id": db_product.id}
+        end_date_datetime = datetime.fromtimestamp(end_date / 1000)
+
+        db_product = Product(
+            name=name,
+            description=description,
+            price=price,
+            status=status,
+            quantity=quantity,
+            end_date=end_date_datetime,
+            seller_id=user['id'],
+            category_id=category_id,
+            image_url_1=image_url_1,
+            image_url_2=image_url_2,
+            image_url_3=image_url_3,
+            created_at=datetime.now()
+        )
+        db.add(db_product)
+        db.commit()
+        db.refresh(db_product)
+        return {"message": "Product added successfully", "product_id": db_product.id}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/get", status_code=status.HTTP_200_OK)
