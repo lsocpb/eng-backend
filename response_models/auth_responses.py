@@ -6,10 +6,10 @@ from fastapi import Depends, HTTPException, Header
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from starlette import status
 
-from db_management.models import User
+from db_management.models import User, UserRole
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -33,7 +33,11 @@ class CreateUserRequest(BaseModel):
     email: str
     phone: str
     address: AddressRequestCreate
+    role: UserRole = Field(default=UserRole.USER)
 
+    class Config:
+        orm_mode = True
+        arbitrary_types_allowed = True
 
 class Token(BaseModel):
     access_token: str
@@ -57,8 +61,8 @@ def authenticate_user(username: str, password: str, db):
     return user
 
 
-def create_access_token(username: str, user_id: int, expires_delta: timedelta):
-    encode = {'sub': username, 'id': user_id}
+def create_access_token(username: str, user_id: int, role: UserRole, expires_delta: timedelta):
+    encode = {'sub': username, 'id': user_id, 'role': role.value}
     expires = datetime.utcnow() + expires_delta
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -82,6 +86,32 @@ async def validate_internal_auth(Authorization: str = Header()):
     if Authorization != internal_auth_token:
         raise HTTPException(status_code=400, detail="Unauthorized")
 
+
+def get_current_user(token: str = Depends(oauth2_bearer)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        user_id: int = payload.get("id")
+        user_role: str = payload.get("role")
+        if username is None or user_id is None or user_role is None:
+            raise credentials_exception
+        return {"username": username, "id": user_id, "role": UserRole(user_role)}
+    except JWTError:
+        raise credentials_exception
+
+
+def admin_required(current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions"
+        )
+    return current_user
 
 def validate_username(username: str):
     if len(username) < 3:

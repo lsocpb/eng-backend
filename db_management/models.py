@@ -1,7 +1,11 @@
+from enum import Enum
+
+from pydantic_core import core_schema
 from sqlalchemy.orm import relationship
 
 from db_management.database import Base
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL
+from sqlalchemy import Enum as SQLAlchemyEnum
 
 
 class Category(Base):
@@ -46,10 +50,16 @@ class Product(Base):
     buyer = relationship('User', foreign_keys=[buyer_id], back_populates='products_bought')
 
 
+class UserRole(str, Enum):
+    ADMIN = 'admin'
+    USER = 'user'
+
+
 class User(Base):
     __tablename__ = 'user'
 
     id = Column(Integer, primary_key=True, index=True)
+    role = Column(SQLAlchemyEnum(UserRole), default=UserRole.USER, nullable=True)
     password_hash = Column(String(255), nullable=False)
     username = Column(String(255), unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)

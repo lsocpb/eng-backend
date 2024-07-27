@@ -42,7 +42,8 @@ async def register(db: db_dependency,
         password_hash=hash_password(create_user_request.password),
         email=create_user_request.email,
         last_login_date=datetime.now(),
-        address=new_address
+        address=new_address,
+        role=create_user_request.role
     )
 
     db.add(create_user_model)
@@ -58,7 +59,7 @@ async def login_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Dep
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail='Could not validate credentials')
-    token = create_access_token(user.username, user.id, timedelta(minutes=6000))
+    token = create_access_token(user.username, user.id, user.role, timedelta(minutes=6000))
 
     return {'access_token': token, 'token_type': 'bearer'}
 
