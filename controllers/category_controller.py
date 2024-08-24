@@ -17,7 +17,6 @@ db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Depends(validate_jwt)
 
 
-# TODO Add a decorator to protect the endpoint with ADMIN JWT token
 @router.post("/add", status_code=status.HTTP_201_CREATED)
 async def add_category(db: db_dependency, category: CategoryAddResponse):
     db_category = Category(name=category.name, description=category.description, status=category.status, icon=category.icon)
@@ -43,6 +42,7 @@ async def delete_category(db: db_dependency,
     db.delete(category)
     db.commit()
     return {"message": "Category deleted successfully"}
+
 
 @router.get("/{category_id}", status_code=status.HTTP_200_OK)
 async def get_category(

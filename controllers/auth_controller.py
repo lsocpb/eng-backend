@@ -42,8 +42,7 @@ async def register(db: db_dependency,
         password_hash=hash_password(create_user_request.password),
         email=create_user_request.email,
         last_login_date=datetime.now(),
-        address=new_address,
-        role=create_user_request.role
+        address=new_address
     )
 
     db.add(create_user_model)

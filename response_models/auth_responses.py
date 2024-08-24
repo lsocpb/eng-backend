@@ -33,11 +33,6 @@ class CreateUserRequest(BaseModel):
     email: str
     phone: str
     address: AddressRequestCreate
-    role: UserRole = Field(default=UserRole.USER)
-
-    class Config:
-        orm_mode = True
-        arbitrary_types_allowed = True
 
 class Token(BaseModel):
     access_token: str
