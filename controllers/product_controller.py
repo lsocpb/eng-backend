@@ -33,7 +33,8 @@ async def add_product(
         image1: UploadFile = File(...),
         image2: UploadFile = File(...),
         image3: UploadFile = File(...),
-        status: Optional[str] = Form("active")
+        status: Optional[str] = Form("active"),
+        is_bid: bool = Form(...)
 ):
     try:
         validate_image(image1)
@@ -62,7 +63,8 @@ async def add_product(
             image_url_1=image_url_1,
             image_url_2=image_url_2,
             image_url_3=image_url_3,
-            created_at=datetime.now()
+            created_at=datetime.now(),
+            isBid=is_bid
         )
         db.add(db_product)
         db.commit()
@@ -92,6 +94,7 @@ async def get_product(db: db_dependency, product_id: int = Query(..., descriptio
         "image_url_3": product.image_url_3,
         "quantity": product.quantity,
         "end_date": product.end_date,
+        "isBid": product.isBid,
         "buyer_id": product.buyer_id,
         "seller": {
             "id": product.seller.id,
@@ -160,6 +163,7 @@ async def get_last_products(db: Session = Depends(get_db)):
             "bid_count": product.quantity,
             "days_left": max(days_left, 0),
             "is_new": (datetime.now() - product.created_at).days < 7,
+            "isBid": product.isBid,
             "status": product.status
         })
 
@@ -194,6 +198,7 @@ async def get_product_by_category(
             "image_url_1": product.image_url_1,
             "quantity": product.quantity,
             "end_date": product.end_date,
+            "isBid": product.isBid,
             "seller_id": product.seller_id
         }
         product_list.append(product_data)

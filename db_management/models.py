@@ -4,7 +4,7 @@ from pydantic_core import core_schema
 from sqlalchemy.orm import relationship
 
 from db_management.database import Base
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL, Boolean
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 
@@ -43,6 +43,7 @@ class Product(Base):
     image_url_1 = Column(String(255), nullable=True)
     image_url_2 = Column(String(255), nullable=True)
     image_url_3 = Column(String(255), nullable=True)
+    isBid = Column(Boolean, nullable=False, default=True)
 
     seller_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     seller = relationship('User', foreign_keys=[seller_id], back_populates='products_sold')
