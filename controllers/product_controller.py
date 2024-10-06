@@ -3,8 +3,6 @@ from typing import Annotated, Optional, Dict, Any
 
 import cloudinary.uploader
 
-from response_models.product_responses import ProductGetResponse
-
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, Form, File
 from sqlalchemy.orm import Session, joinedload
 
@@ -24,18 +22,18 @@ user_dependency = Annotated[dict, Depends(validate_jwt)]
 
 @router.post("/add", status_code=status.HTTP_201_CREATED)
 async def add_product(
-    db: db_dependency,
-    user: user_dependency,
-    name: str = Form(...),
-    description: str = Form(...),
-    price: float = Form(...),
-    quantity: int = Form(...),
-    category_id: int = Form(...),
-    end_date: int = Form(...),
-    image1: UploadFile = File(...),
-    image2: UploadFile = File(...),
-    image3: UploadFile = File(...),
-    status: Optional[str] = Form("active")
+        db: db_dependency,
+        user: user_dependency,
+        name: str = Form(...),
+        description: str = Form(...),
+        price: float = Form(...),
+        quantity: int = Form(...),
+        category_id: int = Form(...),
+        end_date: int = Form(...),
+        image1: UploadFile = File(...),
+        image2: UploadFile = File(...),
+        image3: UploadFile = File(...),
+        status: Optional[str] = Form("active")
 ):
     try:
         validate_image(image1)
@@ -77,7 +75,7 @@ async def add_product(
 
 
 @router.get("/get", status_code=status.HTTP_200_OK)
-async def get_product(db: db_dependency, product_id: int = Query(..., description="The ID of the product to fetch"))\
+async def get_product(db: db_dependency, product_id: int = Query(..., description="The ID of the product to fetch")) \
         -> Dict[str, Any]:
     product = db.query(Product).options(joinedload(Product.seller)).filter(Product.id == product_id).first()
     if product is None:
@@ -104,6 +102,34 @@ async def get_product(db: db_dependency, product_id: int = Query(..., descriptio
     }
 
     return {"product": product_data}
+
+
+@router.delete("/delete", status_code=status.HTTP_200_OK)
+async def delete_product(
+        product_id: int = Query(..., description="The ID of the product to delete"),
+        db: Session = Depends(db_dependency),
+        user: dict = Depends(user_dependency)
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+
+    try:
+        if user['id'] != product.seller_id and user['role'] != "admin":
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+        db.delete(product)
+        db.commit()
+
+        return {"detail": "Product deleted successfully"}
+
+    except HTTPException as http_exc:
+        raise http_exc
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="An error occurred while deleting the product") from e
 
 
 @router.get("/fetch/last", status_code=status.HTTP_200_OK)
@@ -142,16 +168,16 @@ async def get_last_products(db: Session = Depends(get_db)):
 
 @router.get("/by-category/{category_id}", status_code=status.HTTP_200_OK)
 async def get_product_by_category(
-    db: db_dependency,
-    category_id: int,
-    skip: int = Query(0, description="Number of products to skip"),
-    limit: int = Query(10, description="Number of products to return")
+        db: db_dependency,
+        category_id: int,
+        skip: int = Query(0, description="Number of products to skip"),
+        limit: int = Query(10, description="Number of products to return")
 ) -> Dict[str, Any]:
-    products = db.query(Product)\
-        .filter(Product.category_id == category_id)\
-        .order_by(Product.created_at.desc())\
-        .offset(skip)\
-        .limit(limit)\
+    products = db.query(Product) \
+        .filter(Product.category_id == category_id) \
+        .order_by(Product.created_at.desc()) \
+        .offset(skip) \
+        .limit(limit) \
         .all()
 
     if not products:
