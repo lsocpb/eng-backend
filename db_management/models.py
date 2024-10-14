@@ -1,15 +1,17 @@
 from enum import Enum
+
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL, Boolean
+from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship
 
 from db_management.database import Base
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL, Boolean
-from sqlalchemy import Enum as SQLAlchemyEnum
 
 
-class AuctionStatus:
+class AuctionStatus(str, Enum):
     ACTIVE = 'active'
     INACTIVE = 'inactive'
     FINISHED = 'finished'
+
 
 class Category(Base):
     __tablename__ = 'category'
@@ -85,16 +87,15 @@ class Auction(Base):
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey('product.id'), nullable=False)
     product = relationship('Product')
-    status = Column(String(255), nullable=False)
+    role = Column(SQLAlchemyEnum(AuctionStatus), default=AuctionStatus.ACTIVE, nullable=True)
 
     seller_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     seller = relationship('User')
 
     created_at = Column(DateTime, nullable=False)
-    updated_at = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
 
-    bid_available = Column(Boolean, unique=False, default=True)
+    bid_available = Column(Boolean, unique=False, default=True)  # ? we allow bids and buy now in the same auction | use from product
     bid_id = Column(Integer, ForeignKey('bid.id'), nullable=True)
     bid = relationship('Bid')
 
@@ -114,9 +115,6 @@ class Bid(Base):
     bidders = relationship('BidParticipant', back_populates='bid')  # Store all bidders
 
     current_bid_value = Column(DECIMAL, nullable=False)
-    created_at = Column(DateTime, nullable=False)
-    updated_at = Column(DateTime, nullable=False)
-    end_date = Column(DateTime, nullable=False)
 
 
 class BidParticipant(Base):
@@ -127,7 +125,8 @@ class BidParticipant(Base):
     bid = relationship('Bid')
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     user = relationship('User')
-    created_at = Column(DateTime, nullable=False)
+
+    created_at = Column(DateTime, nullable=False)  # When the user joined the bid
 
 
 class BidHistory(Base):
@@ -138,4 +137,6 @@ class BidHistory(Base):
     bid = relationship('Bid')
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     user = relationship('User')
-    amount = Column(DECIMAL, nullable=False)
+
+    amount = Column(DECIMAL, nullable=False)  # Exact amount the user bid
+    created_at = Column(DateTime, nullable=False)  # When the user placed the bid

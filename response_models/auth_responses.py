@@ -2,15 +2,15 @@ import os
 from datetime import datetime, timedelta
 from typing import Annotated
 
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, Header
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from starlette import status
 
 from db_management.models import User, UserRole
-from dotenv import load_dotenv
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -33,6 +33,7 @@ class CreateUserRequest(BaseModel):
     email: str
     phone: str
     address: AddressRequestCreate
+
 
 class Token(BaseModel):
     access_token: str
@@ -108,6 +109,7 @@ def admin_required(current_user: dict = Depends(get_current_user)):
         )
     return current_user
 
+
 def validate_username(username: str):
     if len(username) < 3:
         return False
@@ -129,5 +131,5 @@ def validate_email(email: str):
         return False
     if len(email) > 50:
         return False
-    #todo regex
+    # todo regex
     return True
