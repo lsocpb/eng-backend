@@ -19,6 +19,7 @@ class ProductAddResponse(BaseModel):
     created_at: str
     updated_at: str
 
+
 class ProductGetResponse(BaseModel):
     name: str
     description: str

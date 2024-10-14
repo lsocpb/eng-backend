@@ -1,12 +1,15 @@
 from enum import Enum
-
-from pydantic_core import core_schema
 from sqlalchemy.orm import relationship
 
 from db_management.database import Base
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL, Boolean
 from sqlalchemy import Enum as SQLAlchemyEnum
 
+
+class AuctionStatus:
+    ACTIVE = 'active'
+    INACTIVE = 'inactive'
+    FINISHED = 'finished'
 
 class Category(Base):
     __tablename__ = 'category'
@@ -69,5 +72,70 @@ class User(Base):
     address = relationship('Address')
     profile_image_url = Column(String(255), nullable=True)
 
+    balance_available = Column(DECIMAL, nullable=False)  # Available balance / spendable
+    balance_reserved = Column(DECIMAL, nullable=False)  # Balance reserved for bids / frozen
+
     products_sold = relationship('Product', foreign_keys=[Product.seller_id], back_populates='seller')
     products_bought = relationship('Product', foreign_keys=[Product.buyer_id], back_populates='buyer')
+
+
+class Auction(Base):
+    __tablename__ = 'auction'
+
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey('product.id'), nullable=False)
+    product = relationship('Product')
+    status = Column(String(255), nullable=False)
+
+    seller_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    seller = relationship('User')
+
+    created_at = Column(DateTime, nullable=False)
+    updated_at = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+
+    bid_available = Column(Boolean, unique=False, default=True)
+    bid_id = Column(Integer, ForeignKey('bid.id'), nullable=True)
+    bid = relationship('Bid')
+
+    buy_now_price = Column(DECIMAL, nullable=True)
+    buy_now_available = Column(Boolean, unique=False, default=True)
+
+
+class Bid(Base):
+    __tablename__ = 'bid'
+
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey('product.id'), nullable=False)
+    product = relationship('Product')
+    higher_bidder_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    higher_bidder = relationship('User')
+
+    bidders = relationship('BidParticipant', back_populates='bid')  # Store all bidders
+
+    current_bid_value = Column(DECIMAL, nullable=False)
+    created_at = Column(DateTime, nullable=False)
+    updated_at = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+
+
+class BidParticipant(Base):
+    __tablename__ = 'bid_participant'
+
+    id = Column(Integer, primary_key=True, index=True)
+    bid_id = Column(Integer, ForeignKey('bid.id'), nullable=False)
+    bid = relationship('Bid')
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    user = relationship('User')
+    created_at = Column(DateTime, nullable=False)
+
+
+class BidHistory(Base):
+    __tablename__ = 'bid_history'
+
+    id = Column(Integer, primary_key=True, index=True)
+    bid_id = Column(Integer, ForeignKey('bid.id'), nullable=False)
+    bid = relationship('Bid')
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    user = relationship('User')
+    amount = Column(DECIMAL, nullable=False)
