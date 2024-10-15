@@ -2,6 +2,7 @@ from enum import Enum
 
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL, Boolean
 from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
 from db_management.database import Base
@@ -48,8 +49,8 @@ class Product(Base):
     image_url_1 = Column(String(255), nullable=True)
     image_url_2 = Column(String(255), nullable=True)
     image_url_3 = Column(String(255), nullable=True)
-    isBid = Column(Boolean, nullable=False, default=True)
 
+    isBid = Column(Boolean, nullable=False, default=True)
     seller_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     seller = relationship('User', foreign_keys=[seller_id], back_populates='products_sold')
     buyer_id = Column(Integer, ForeignKey('user.id'), nullable=True)
@@ -74,11 +75,15 @@ class User(Base):
     address = relationship('Address')
     profile_image_url = Column(String(255), nullable=True)
 
-    balance_available = Column(DECIMAL, nullable=False)  # Available balance / spendable
-    balance_reserved = Column(DECIMAL, nullable=False)  # Balance reserved for bids / frozen
+    balance_available = Column(DECIMAL, nullable=False, default=0.0)  # Available balance for withdraw / buy now
+    balance_reserved = Column(DECIMAL, nullable=False, default=0.0)  # Balance reserved for bids / frozen
 
     products_sold = relationship('Product', foreign_keys=[Product.seller_id], back_populates='seller')
     products_bought = relationship('Product', foreign_keys=[Product.buyer_id], back_populates='buyer')
+
+    @hybrid_property
+    def get_current_balance(self):
+        return self.balance_available - self.balance_reserved
 
 
 class Auction(Base):
