@@ -8,9 +8,9 @@ from db_management.models import User
 
 def get_by_id(user_id: int) -> User | None:
     with session_maker() as session:
-        return session.query(User).options(
+        return session.query(User).where(User.id == user_id).options(
             selectinload(User.address)  # load the address relationship
-        ).all()[0]
+        ).first()
 
 
 def delete(user_id: int) -> None:
@@ -23,6 +23,13 @@ def update_user_profile_image(id: int, profile_image_url: str) -> None:
         session.execute(Update(User).where(User.id == id).values({
             User.profile_image_url: profile_image_url,
             User.updated_at: current_timestamp()
+        }))
+
+
+def increase_frozen_balance(user: User, amount: float) -> None:
+    with session_maker.begin() as session:
+        session.execute(Update(User).where(User.id == user.id).values({
+            User.balance_reserved: User.balance_reserved + amount
         }))
 
 

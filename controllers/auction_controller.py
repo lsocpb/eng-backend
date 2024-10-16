@@ -41,6 +41,17 @@ async def create_category(category: dto.CreateCategory):
         raise e
 
 
+# @router.post("/bid", status_code=status.HTTP_200_OK)
+# async def place_bid(auction_id: int, bid_value: float, user: dict = Depends(user_dependency)):
+#     try:
+#         repos.auction_repo.place_bid(auction_id, bid_value, user)
+#         return {"message": "Bid placed successfully"}
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.get("/get", status_code=status.HTTP_200_OK)
 async def get_product(db: db_dependency, product_id: int = Query(..., description="The ID of the product to fetch")) \
         -> Dict[str, Any]:

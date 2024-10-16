@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, FLOAT
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, mapped_column, Mapped
@@ -19,7 +19,7 @@ class Category(Base):
     icon = Column(String(255), nullable=True)
 
     def __str__(self):
-        return f"Category: {self.name} - {self.description}"
+        return f"Category: [name: {self.name} desc: {self.description}]"
 
 
 class Address(Base):
@@ -31,7 +31,7 @@ class Address(Base):
     zip = Column(String(255), nullable=False)
 
     def __str__(self):
-        return f"Address: {self.street} - {self.city} - {self.zip}"
+        return f"[Address: {self.street} {self.city} {self.zip}]"
 
 
 class Product(Base):
@@ -49,7 +49,7 @@ class Product(Base):
     image_url_3 = Column(String(255), nullable=True)
 
     def __str__(self):
-        return f"Product: {self.name} - {self.description}"
+        return f"Product: [name: {self.name} desc: {self.description}]"
 
 
 class Bid(Base):
@@ -57,7 +57,7 @@ class Bid(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    current_bid_value = Column(DECIMAL, nullable=False)
+    current_bid_value = Column(FLOAT, nullable=False)
 
     current_bid_winner_id = Column(Integer, ForeignKey('user.id'))
     current_bid_winner = relationship('User')
@@ -74,7 +74,7 @@ class BidParticipant(Base):
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     user = relationship('User')
 
-    created_at = Column(DateTime, nullable=False)  # When the user joined the bid
+    created_at = Column(DateTime, nullable=False, default=datetime.now)  # When the user placed the bid
 
 
 class BidHistory(Base):
@@ -86,8 +86,8 @@ class BidHistory(Base):
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     user = relationship('User')
 
-    amount = Column(DECIMAL, nullable=False)  # Exact amount the user bid
-    created_at = Column(DateTime, nullable=False)  # When the user placed the bid
+    amount = Column(FLOAT, nullable=False)  # Exact amount the user bid
+    created_at = Column(DateTime, nullable=False, default=datetime.now)  # When the user placed the bid
 
 
 class Auction(Base):
@@ -106,7 +106,7 @@ class Auction(Base):
     bid_id = Column(Integer, ForeignKey('bid.id'), nullable=True)
     bid = relationship('Bid')
 
-    buy_now_price = Column(DECIMAL, nullable=True)
+    buy_now_price = Column(FLOAT, nullable=True)
 
     seller_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     seller: Mapped["User"] = relationship(back_populates="products_sold", foreign_keys=[seller_id])
@@ -133,8 +133,18 @@ class Auction(Base):
         else:
             return self.bid.current_bid_winner
 
+    @hybrid_property
+    def is_biddable(self) -> bool:
+        if self.auction_type == AuctionType.BUY_NOW:
+            return False
+
+        if self.is_auction_finished:
+            return False
+
+        return True
+
     def __str__(self):
-        return f"Auction: {self.product.name} - {self.product.description} started at {self.created_at} and ends at {self.end_date}"
+        return f"Auction: [{self.product.name} - {self.product.description} started: {self.created_at} ends: {self.end_date}]"
 
 
 class User(Base):
@@ -152,8 +162,8 @@ class User(Base):
 
     profile_image_url = Column(String(255), nullable=True)
 
-    balance_available = Column(DECIMAL, nullable=False, default=0.0)  # Available balance for withdraw / buy now
-    balance_reserved = Column(DECIMAL, nullable=False, default=0.0)  # Balance reserved for bids / frozen
+    balance_available = Column(FLOAT, nullable=False, default=0.0)  # Available balance for withdraw / buy now
+    balance_reserved = Column(FLOAT, nullable=False, default=0.0)  # Balance reserved for bids / frozen
 
     products_sold: Mapped[List["Auction"]] = relationship(back_populates="seller", foreign_keys=[Auction.seller_id])
     products_bought: Mapped[List["Auction"]] = relationship(back_populates="buyer", foreign_keys=[Auction.buyer_id])
@@ -166,4 +176,4 @@ class User(Base):
         return self.balance_available - self.balance_reserved
 
     def __str__(self):
-        return f"User: {self.username} - {self.email}"
+        return f"User: [{self.username} - {self.email} | total, available, reserved: {self.balance_available}, {self.get_current_balance}, {self.balance_reserved}]"

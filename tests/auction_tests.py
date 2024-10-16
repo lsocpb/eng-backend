@@ -1,12 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy.orm import selectinload
-
 import repos.auction_repo
 import repos.user_repo
-from db_management.database import session_maker
+import services.bid_service
+
 from db_management.dto import CreateAuction, CreateAuctionProduct
-from db_management.models import User
 from utils.constants import AuctionType
 
 
@@ -22,25 +20,18 @@ def create_sample_auction() -> CreateAuction:
     return auction
 
 
-def a():
-    with session_maker() as session:
-        return session.query(User).options(
-            selectinload(User.address)  # load the address relationship
-        ).all()
-
-
 if __name__ == '__main__':
     from db_management.database import create_db
+
     create_db()
 
-    user = repos.user_repo.get_by_id(3)
+    user = repos.user_repo.get_by_id(5)
     if user is None:
         raise ValueError("User not found")
 
-    get_latest_auctions = repos.auction_repo.get_latest_auctions()
-    for auction in get_latest_auctions:
-        print(auction)
+    auction = repos.auction_repo.get_auction_by_id(3)
+    if auction is None:
+        raise ValueError("Auction already exists")
 
-    # auction = create_sample_auction()
-
-    # repos.auction_repo.create_auction(auction, user)
+    print(f"Auction: {auction} User: {user}")
+    services.bid_service.place_bid(auction, user, 51)

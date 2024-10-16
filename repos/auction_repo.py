@@ -2,7 +2,7 @@ from sqlalchemy.orm import selectinload
 
 from db_management.database import session_maker
 from db_management.dto import CreateAuction, CreateCategory
-from db_management.models import Auction, Product, Category, User, Bid
+from db_management.models import Auction, Product, Category, User, Bid, BidHistory, BidParticipant
 from utils.constants import AuctionType
 
 
@@ -72,3 +72,39 @@ def get_latest_auctions() -> list[Auction]:
             selectinload(Auction.seller),
             selectinload(Auction.buyer)
         ).order_by(Auction.created_at.desc()).limit(10).all()
+
+
+def is_user_bid_participant(auction: Auction, user: User) -> bool:
+    with session_maker() as session:
+        return session.query(BidParticipant).join(BidHistory, BidParticipant.bid_id == BidHistory.bid_id) \
+            .filter(BidParticipant.bid_id == auction.bid.id, BidHistory.user_id == user.id).first() is not None
+
+
+def create_bid_history_entry(auction: Auction, user: User, amount: float) -> None:
+    with session_maker() as session:
+        bid_history_entry = BidHistory(
+            bid=auction.bid,
+            user=user,
+            amount=amount
+        )
+        session.add(bid_history_entry)
+        session.commit()
+
+
+def add_bid_participant(auction: Auction, user: User) -> None:
+    if not is_user_bid_participant(auction, user):
+        with session_maker() as session:
+            bid_participant = BidParticipant(
+                bid=auction.bid,
+                user=user
+            )
+            session.add(bid_participant)
+            session.commit()
+
+
+def update_bid_winner(auction: Auction, user: User, amount: float) -> None:
+    with session_maker() as session:
+        auction.bid.current_bid_winner = user
+        auction.bid.current_bid_value = amount
+        session.add(auction)
+        session.commit()
