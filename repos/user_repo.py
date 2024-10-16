@@ -10,7 +10,7 @@ def get_by_id(user_id: int) -> User | None:
     with session_maker() as session:
         return session.query(User).options(
             selectinload(User.address)  # load the address relationship
-        ).where(User.id == user_id).first()
+        ).all()[0]
 
 
 def delete(user_id: int) -> None:

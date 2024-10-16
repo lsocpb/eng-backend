@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from controllers import auth_controller, user_controller, category_controller, product_controller
+from controllers import auth_controller, user_controller, category_controller, auction_controller, \
+    file_upload_controller
 from db_management import models
 from db_management.database import engine
 
@@ -13,7 +14,8 @@ app = FastAPI()
 app.include_router(auth_controller.router)
 app.include_router(user_controller.router)
 app.include_router(category_controller.router)
-app.include_router(product_controller.router)
+app.include_router(auction_controller.router)
+app.include_router(file_upload_controller.router)
 
 
 origins = [

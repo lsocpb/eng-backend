@@ -1,79 +1,44 @@
-from datetime import date, datetime
-from typing import Annotated, Optional, Dict, Any
+from datetime import datetime
+from typing import Annotated, Dict, Any
 
-import cloudinary.uploader
-
-from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, Form, File
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session, joinedload
 
-from db_management.models import Product, User
-
-from utils.utils import get_db, validate_image
+import repos.auction_repo
+from db_management import dto
+from db_management.models import Product
 from response_models.auth_responses import validate_jwt
+from utils.utils import get_db
 
 router = APIRouter(
-    prefix="/product",
-    tags=["product"]
+    prefix="/auction",
+    tags=["auction"]
 )
 
 db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(validate_jwt)]
 
 
-@router.post("/add", status_code=status.HTTP_201_CREATED)
-async def add_product(
-        db: db_dependency,
-        user: user_dependency,
-        name: str = Form(...),
-        description: str = Form(...),
-        price: float = Form(...),
-        quantity: int = Form(...),
-        category_id: int = Form(...),
-        end_date: int = Form(...),
-        image1: UploadFile = File(...),
-        image2: UploadFile = File(...),
-        image3: UploadFile = File(...),
-        status: Optional[str] = Form("active"),
-        is_bid: bool = Form(...)
-):
+# todo: add auth
+@router.put("", status_code=status.HTTP_201_CREATED)
+async def create_auction(db: db_dependency, auction: dto.CreateAuction):
+    print(auction.dict())
     try:
-        validate_image(image1)
-        validate_image(image2)
-        validate_image(image3)
-
-        result_image1 = cloudinary.uploader.upload(image1.file)
-        result_image2 = cloudinary.uploader.upload(image2.file)
-        result_image3 = cloudinary.uploader.upload(image3.file)
-
-        image_url_1 = result_image1.get('url')
-        image_url_2 = result_image2.get('url')
-        image_url_3 = result_image3.get('url')
-
-        end_date_datetime = datetime.fromtimestamp(end_date / 1000)
-
-        db_product = Product(
-            name=name,
-            description=description,
-            price=price,
-            status=status,
-            quantity=quantity,
-            end_date=end_date_datetime,
-            seller_id=user['id'],
-            category_id=category_id,
-            image_url_1=image_url_1,
-            image_url_2=image_url_2,
-            image_url_3=image_url_3,
-            created_at=datetime.now(),
-            isBid=is_bid
-        )
-        db.add(db_product)
-        db.commit()
-        db.refresh(db_product)
-        return {"message": "Product added successfully", "product_id": db_product.id}
+        repos.auction_repo.create_auction(auction)
+        return {"message": "Product added successfully", "product_id": auction.product.name}
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/category", status_code=status.HTTP_201_CREATED)
+async def create_category(category: dto.CreateCategory):
+    try:
+        repos.auction_repo.create_category(category)
+        return {"message": "Category added successfully"}
+    except HTTPException as e:
+        raise e
 
 
 @router.get("/get", status_code=status.HTTP_200_OK)

@@ -33,3 +33,4 @@ def get_db() -> Generator[Session, Any, None]:
 # SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+print("Database connection established")

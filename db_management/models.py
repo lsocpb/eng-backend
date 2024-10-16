@@ -1,9 +1,10 @@
 from datetime import datetime
+from typing import List
 
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, mapped_column, Mapped
 
 from db_management.database import Base
 from utils.constants import *
@@ -15,8 +16,10 @@ class Category(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), unique=True, nullable=False)
     description = Column(String(255), nullable=False)
-    status = Column(String(255), nullable=False)
     icon = Column(String(255), nullable=True)
+
+    def __str__(self):
+        return f"Category: {self.name} - {self.description}"
 
 
 class Address(Base):
@@ -27,6 +30,9 @@ class Address(Base):
     city = Column(String(255), nullable=False)
     zip = Column(String(255), nullable=False)
 
+    def __str__(self):
+        return f"Address: {self.street} - {self.city} - {self.zip}"
+
 
 class Product(Base):
     __tablename__ = 'product'
@@ -35,12 +41,15 @@ class Product(Base):
     name = Column(String(255), nullable=False)
     description = Column(String(255), nullable=False)
 
-    category_id = Column(Integer, ForeignKey('category.id'), nullable=False)
-    category = relationship('Category')
+    category_id: Mapped[int] = mapped_column(ForeignKey("category.id"), nullable=False)
+    category: Mapped["Category"] = relationship()
 
     image_url_1 = Column(String(255), nullable=True)
     image_url_2 = Column(String(255), nullable=True)
     image_url_3 = Column(String(255), nullable=True)
+
+    def __str__(self):
+        return f"Product: {self.name} - {self.description}"
 
 
 class Bid(Base):
@@ -50,7 +59,7 @@ class Bid(Base):
 
     current_bid_value = Column(DECIMAL, nullable=False)
 
-    current_bid_winner_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    current_bid_winner_id = Column(Integer, ForeignKey('user.id'))
     current_bid_winner = relationship('User')
     bidders = relationship('BidParticipant', back_populates='bid')  # Store all bidders
 
@@ -91,7 +100,7 @@ class Auction(Base):
     product_id = Column(Integer, ForeignKey('product.id'), nullable=False)
     product = relationship('Product')
 
-    created_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.now, nullable=False)
     end_date = Column(DateTime, nullable=False)
 
     bid_id = Column(Integer, ForeignKey('bid.id'), nullable=True)
@@ -99,10 +108,11 @@ class Auction(Base):
 
     buy_now_price = Column(DECIMAL, nullable=True)
 
-    seller_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    seller = relationship('User')
-    buyer_id = Column(Integer, ForeignKey('user.id'), nullable=True)
-    buyer = relationship('User', foreign_keys=[buyer_id], back_populates='products_bought')
+    seller_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    seller: Mapped["User"] = relationship(back_populates="products_sold", foreign_keys=[seller_id])
+
+    buyer_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=True)
+    buyer: Mapped["User"] = relationship(back_populates="products_bought", foreign_keys=[buyer_id])
 
     @hybrid_property
     def is_auction_finished(self) -> bool:
@@ -123,6 +133,9 @@ class Auction(Base):
         else:
             return self.bid.current_bid_winner
 
+    def __str__(self):
+        return f"Auction: {self.product.name} - {self.product.description} started at {self.created_at} and ends at {self.end_date}"
+
 
 class User(Base):
     __tablename__ = 'user'
@@ -133,15 +146,17 @@ class User(Base):
     username = Column(String(255), unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     last_login_date = Column(DateTime, nullable=False)
-    address_id = Column(Integer, ForeignKey('address.id'), nullable=False)
-    address = relationship('Address')
+
+    address_id: Mapped[int] = mapped_column(ForeignKey("address.id"), nullable=False)
+    address: Mapped["Address"] = relationship()
+
     profile_image_url = Column(String(255), nullable=True)
 
     balance_available = Column(DECIMAL, nullable=False, default=0.0)  # Available balance for withdraw / buy now
     balance_reserved = Column(DECIMAL, nullable=False, default=0.0)  # Balance reserved for bids / frozen
 
-    products_sold = relationship('Product', foreign_keys=[Auction.seller_id], back_populates='seller')
-    products_bought = relationship('Product', foreign_keys=[Auction.buyer_id], back_populates='buyer')
+    products_sold: Mapped[List["Auction"]] = relationship(back_populates="seller", foreign_keys=[Auction.seller_id])
+    products_bought: Mapped[List["Auction"]] = relationship(back_populates="buyer", foreign_keys=[Auction.buyer_id])
 
     @hybrid_property
     def get_current_balance(self) -> float:
@@ -149,3 +164,6 @@ class User(Base):
             return 0.0
 
         return self.balance_available - self.balance_reserved
+
+    def __str__(self):
+        return f"User: {self.username} - {self.email}"

@@ -11,7 +11,7 @@ from db_management.models import User
 from repos.user_repo import update_user_profile_image
 from response_models.auth_responses import validate_jwt
 from response_models.user_responses import ProfileResponse, AddressResponse, EmailSchema
-from utils.utils import get_db, validate_image
+from utils.utils import get_db
 
 router = APIRouter(
     tags=["user"]
@@ -47,7 +47,7 @@ async def get_user_info(user: user_dependency, db: db_dependency):
 @router.post("/upload_profile_image", status_code=status.HTTP_200_OK)
 async def upload_profile_image(user: user_dependency, db: db_dependency, file: UploadFile = File(...)):
     try:
-        validate_image(file)
+        # validate_image(file)
 
         result = cloudinary.uploader.upload(file.file)
         image_url = result.get('url')
