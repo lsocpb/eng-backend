@@ -1,18 +1,17 @@
 import os
 from typing import Annotated
 
+import cloudinary.uploader
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sendgrid import Mail, SendGridAPIClient
 from sqlalchemy.orm import Session
 
-from response_models.auth_responses import validate_jwt
 from db_management.models import User
+from repos.user_repo import update_user_profile_image
+from response_models.auth_responses import validate_jwt
 from response_models.user_responses import ProfileResponse, AddressResponse, EmailSchema
 from utils.utils import get_db, validate_image
-
-import cloudinary.uploader
-from cloudinary.utils import cloudinary_url
 
 router = APIRouter(
     tags=["user"]
@@ -25,6 +24,7 @@ load_dotenv()
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL")
 SENDGRID_TO_EMAIL = os.getenv("SENDGRID_TO_EMAIL")
+
 
 @router.get("/profile", status_code=status.HTTP_200_OK)
 async def get_user_info(user: user_dependency, db: db_dependency):
@@ -53,10 +53,7 @@ async def upload_profile_image(user: user_dependency, db: db_dependency, file: U
         image_url = result.get('url')
 
         user_id = user['id']
-        db_user = db.query(User).filter(User.id == user_id).first()
-
-        db_user.profile_image_url = image_url
-        db.commit()
+        update_user_profile_image(user_id, image_url)
 
         return {"message": "Image uploaded successfully", "url": image_url}
     except Exception as e:
@@ -65,7 +62,6 @@ async def upload_profile_image(user: user_dependency, db: db_dependency, file: U
 
 @router.post("/send-email", status_code=status.HTTP_200_OK)
 async def send_email(email_data: EmailSchema):
-
     try:
         message = Mail(
             from_email=SENDGRID_FROM_EMAIL,

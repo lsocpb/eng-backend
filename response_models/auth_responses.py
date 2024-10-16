@@ -10,7 +10,8 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 from starlette import status
 
-from db_management.models import User, UserRole
+from db_management.models import User
+from utils.constants import UserRole
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
