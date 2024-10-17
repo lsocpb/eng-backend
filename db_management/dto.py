@@ -41,7 +41,6 @@ class CreateAuctionProduct(BaseModel):
 
 class CreateAuction(BaseModel):
     auction_type: AuctionType = Field(default=AuctionType.BUY_NOW, description="Type of auction")
-    quantity: int = Field(default=1, ge=1, le=99, description="Quantity of products")  # product amount range 1-99
     end_date: datetime = Field(description="End date of auction")
     price: float = Field(ge=0.1, description="Price of product")
     product: CreateAuctionProduct = Field(description="Product details")
@@ -51,10 +50,7 @@ class CreateAuction(BaseModel):
     # validate if end_date is not in the past
     @field_validator("end_date")
     def validate_end_date(cls, value: datetime):
-        ts1 = int(datetime.now().timestamp())
-        ts2 = int(value.timestamp())
-
-        if ts2 < ts1:
+        if int(value.timestamp()) < int(datetime.now().timestamp()):
             raise ValueError("End date cannot be in the past")
 
         return value

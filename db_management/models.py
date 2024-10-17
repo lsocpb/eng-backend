@@ -126,7 +126,6 @@ class Auction(Base):
     id = Column(Integer, primary_key=True, index=True)
     auction_type = Column(SQLAlchemyEnum(AuctionType), nullable=False)
     auction_status = Column(SQLAlchemyEnum(AuctionStatus), nullable=False, default=AuctionStatus.ACTIVE)
-    quantity = Column(Integer, nullable=False)
 
     product_id = Column(Integer, ForeignKey('product.id'), nullable=False)
     product = relationship('Product')
@@ -172,7 +171,6 @@ class Auction(Base):
             "id": self.id,
             "category": self.product.category.to_public(),
             "auction_type": self.auction_type,
-            "quantity": self.quantity,
             "product": self.product.to_public(),
             "created_at": self.created_at,
             "end_date": self.end_date,

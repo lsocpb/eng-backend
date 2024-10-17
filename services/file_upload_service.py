@@ -37,7 +37,6 @@ def upload_images(file_list: list[UploadFile]) -> list[str]:
         if not result.get('url'):
             raise HTTPException(status_code=500, detail="Failed to upload image")
 
-        print(f"Uploaded image: {result.get('url')}")
         images.append(result.get('url'))
 
     return images

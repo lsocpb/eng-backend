@@ -3,13 +3,15 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import current_timestamp
 
 from db_management.database import session_maker
-from db_management.models import User
+from db_management.models import User, Auction
 
 
 def get_by_id(user_id: int) -> User | None:
     with session_maker() as session:
         return session.query(User).where(User.id == user_id).options(
-            selectinload(User.address)  # load the address relationship
+            selectinload(User.address),  # load the address relationship
+            selectinload(User.products_bought),  # load the address relationship
+            selectinload(User.products_sold)  # load the address relationship
         ).first()
 
 
@@ -31,6 +33,13 @@ def set_frozen_balance(user: User, amount: float) -> None:
         session.execute(Update(User).where(User.id == user.id).values({
             User.balance_reserved: amount
         }))
+
+
+def add_user_bought_product(user: User, auction: Auction) -> None:
+    with session_maker.begin() as session:
+        user.products_bought.append(auction)
+        session.add(user)
+        session.commit()
 
 
 def deduct_total_balance(user: User, amount: float) -> None:

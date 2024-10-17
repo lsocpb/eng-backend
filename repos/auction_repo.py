@@ -48,7 +48,6 @@ def create_auction(auction: CreateAuction, user: User) -> Auction:
         )
         db_auction = Auction(
             auction_type=auction.auction_type,
-            quantity=auction.quantity,
             end_date=auction.end_date,
             product=product
         )

@@ -49,10 +49,10 @@ async def get_user_info(user: user_dependency, db: db_dependency):
 async def upload_profile_image(user: user_dependency, file: UploadFile = File(...)):
     user_id = user['id']
 
-    image_url = services.file_upload_service.upload_image(file)
-    repos.user_repo.update_user_profile_image(user_id, image_url)
+    image_url = services.file_upload_service.upload_images([file])
+    repos.user_repo.update_user_profile_image(user_id, image_url[0])
 
-    return {"message": "Image uploaded successfully", "url": image_url}
+    return None
 
 
 @router.post("/send-email", status_code=status.HTTP_200_OK)

@@ -12,7 +12,7 @@ def create_sample_auction() -> CreateAuction:
     product = CreateAuctionProduct(name="Drzewo mądrości", description="Drzewo mądrości", category_id=1, images=image)
 
     custom_date = datetime(2024, 10, 20, 12, 30, 0)  # Custom date and time
-    auction = CreateAuction(auction_type=AuctionType.BID, quantity=1, end_date=custom_date, price=1.0,
+    auction = CreateAuction(auction_type=AuctionType.BID, end_date=custom_date, price=1.0,
                             product=product)
     print(auction.dict())
 
@@ -32,6 +32,7 @@ if __name__ == '__main__':
     if auction is None:
         raise ValueError("Auction already exists")
 
-    print(f"Auction: {auction} User: {user}")
+    print(f"Auction: {auction} User: {user} User bought: {user.products_bought}")
+    # repos.user_repo.add_user_bought_product(user, auction)
 
-    services.purcharse_service.place_bid(auction.id, user.id, 5.12345678)
+    # services.purcharse_service.place_bid(auction.id, user.id, 5.12345678)
