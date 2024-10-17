@@ -46,13 +46,15 @@ async def get_user_info(user: user_dependency, db: db_dependency):
 
 
 @router.post("/upload_profile_image", status_code=status.HTTP_200_OK)
-async def upload_profile_image(user: user_dependency, file: UploadFile = File(...)):
-    user_id = user['id']
+async def upload_profile_image(user: user_dependency, db: db_dependency, file: UploadFile = File(...)):
+    user = repos.user_repo.get_by_id(db, user['id'])
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
 
     image_url = services.file_upload_service.upload_images([file])
-    repos.user_repo.update_user_profile_image(user_id, image_url[0])
+    repos.user_repo.update_user_profile_image(user, image_url[0])
 
-    return None
+    return {"message": "Profile image uploaded successfully"}
 
 
 @router.post("/send-email", status_code=status.HTTP_200_OK)
