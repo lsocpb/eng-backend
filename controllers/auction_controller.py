@@ -23,7 +23,7 @@ user_dependency = Annotated[dict, Depends(validate_jwt)]
 @router.get("/{auction_id}", status_code=status.HTTP_200_OK)
 async def get_auction(auction_id: str, db: db_dependency):
     if auction_id == "last":
-        products = repos.auction_repo.get_latest_auctions(db, 5)
+        products = repos.auction_repo.get_latest_auctions(db, 9)
         return {"products": [product.to_public() for product in products]}
     elif auction_id.isnumeric():
         auction = repos.auction_repo.get_full_auction_by_id(db, int(auction_id))
@@ -36,16 +36,13 @@ async def get_auction(auction_id: str, db: db_dependency):
         raise HTTPException(status_code=400, detail="Invalid auction id")
 
 
-# todo: add auth
 @router.put("", status_code=status.HTTP_201_CREATED)
-async def create_auction(auction: dto.CreateAuction, db: db_dependency):
-    user = repos.user_repo.get_by_id(db, auction.user_id)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    repos.auction_repo.create_auction(db, auction, user)
+async def create_auction(auction: dto.CreateAuction, user: user_dependency, db: db_dependency):
+    services.purcharse_service.create_auction(db, auction, user['id'])
+    return {"message": "Auction created successfully"}
 
 
+# todo: permission check for deleting auction
 @router.delete("", status_code=status.HTTP_200_OK)
 async def delete_auction(dto: dto.DeleteAuction, db: db_dependency):
     repos.auction_repo.delete_auction(db, dto.auction_id)

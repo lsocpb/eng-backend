@@ -3,8 +3,10 @@ import threading
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+import db_management.dto
 import repos.auction_repo
 import repos.user_repo
+from db_management.models import Product, Auction, Bid
 from utils.constants import AuctionType, AuctionStatus
 
 
@@ -48,10 +50,10 @@ def place_bid(session: Session, auction_id: int, user_id: int, amount: float) ->
         # real logic
         repos.auction_repo.add_bid_participant(session, auction, user)
         repos.auction_repo.create_bid_history_entry(session, auction, user, amount)
-        repos.auction_repo.update_bid_winner(session, auction, user, new_bid_value)
+        repos.auction_repo.update_bid_winner(auction, user, new_bid_value)
 
         # freeze the amount of new total bid price in the user's balance
-        repos.user_repo.set_frozen_balance(session, user, new_bid_value)
+        repos.user_repo.set_frozen_balance(user, new_bid_value)
 
 
 def buy_now(session: Session, auction_id: int, user_id: int) -> None:
@@ -85,3 +87,43 @@ def buy_now(session: Session, auction_id: int, user_id: int) -> None:
 
         # save the transaction
         session.commit()
+
+
+def create_auction(session: Session, auction: db_management.dto.CreateAuction, user_id: int) -> None:
+    user = repos.user_repo.get_by_id(session, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # todo: verify if user can place auction eg. verified user, etc.
+
+    product = Product(
+        name=auction.product.name,
+        description=auction.product.description,
+        category_id=auction.product.category_id,
+        image_url_1=auction.product.images[0],
+        image_url_2=auction.product.images[1] if len(auction.product.images) > 1 else None,
+        image_url_3=auction.product.images[2] if len(auction.product.images) > 2 else None
+    )
+    db_auction = Auction(
+        auction_type=auction.auction_type,
+        end_date=auction.end_date,
+        product=product
+    )
+
+    # Set the seller
+    db_auction.seller = user
+
+    # Set the price based on the auction type
+    if auction.auction_type == AuctionType.BID:
+        bid = Bid(
+            current_bid_value=auction.price,
+        )
+        db_auction.bid = bid
+    else:
+        db_auction.buy_now_price = auction.price
+
+    # real logic
+    repos.auction_repo.create_auction(session, db_auction)
+
+    # save the transaction
+    session.commit()

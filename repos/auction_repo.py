@@ -1,10 +1,10 @@
-from typing import Type
+from sqlalchemy.orm import selectinload, Session, object_session
 
 from sqlalchemy.orm import selectinload, Session, object_session
 
-from db_management.dto import CreateAuction, CreateCategory
+from db_management.dto import CreateCategory
 from db_management.models import Auction, Product, Category, User, Bid, BidHistory, BidParticipant
-from utils.constants import AuctionType, AuctionStatus
+from utils.constants import AuctionStatus
 
 
 def create_category(session: Session, category: CreateCategory) -> Category:
@@ -32,37 +32,8 @@ def delete_category(session: Session, category_id: int) -> None:
     session.delete(category)
 
 
-def create_auction(session: Session, auction: CreateAuction, user: User) -> Auction:
-    product = Product(
-        name=auction.product.name,
-        description=auction.product.description,
-        category_id=auction.product.category_id,
-        image_url_1=auction.product.images[0],
-        image_url_2=auction.product.images[1] if len(auction.product.images) > 1 else None,
-        image_url_3=auction.product.images[2] if len(auction.product.images) > 2 else None
-    )
-    db_auction = Auction(
-        auction_type=auction.auction_type,
-        end_date=auction.end_date,
-        product=product
-    )
-
-    # Set the seller
-    db_auction.seller = user
-
-    # Set the price based on the auction type
-    if auction.auction_type == AuctionType.BID:
-        bid = Bid(
-            current_bid_value=auction.price,
-        )
-        db_auction.bid = bid
-    else:
-        db_auction.buy_now_price = auction.price
-
-    session.add(db_auction)
-    session.commit()
-    session.refresh(db_auction)
-    return db_auction
+def create_auction(session: Session, auction: Auction):
+    session.add(auction)
 
 
 def delete_auction(session: Session, auction_id: int) -> None:
