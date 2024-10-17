@@ -87,7 +87,7 @@ async def place_bid(dto: PlaceBid, user: dict = Depends(user_dependency)):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/by-category/{category_id}", status_code=status.HTTP_200_OK)
+@router.get("/category/{category_id}", status_code=status.HTTP_200_OK)
 async def get_auctions_by_category(category_id: int):
     auctions = repos.auction_repo.get_auctions_by_category(category_id)
     if not auctions:

@@ -18,6 +18,15 @@ db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Depends(validate_jwt)
 
 
+@router.get("/{category_id}", status_code=status.HTTP_200_OK)
+async def get_category(category_id: int):
+    category = repos.auction_repo.get_category_by_id(category_id)
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    return category.to_public()
+
+
 @router.put("", status_code=status.HTTP_201_CREATED)
 async def create_category(category: dto.CreateCategory):
     try:
@@ -25,15 +34,6 @@ async def create_category(category: dto.CreateCategory):
         return {"message": "Category added successfully"}
     except HTTPException as e:
         raise e
-
-
-@router.get("", status_code=status.HTTP_200_OK)
-async def get_category(dto: dto.GetCategory):
-    category = repos.auction_repo.get_category_by_id(dto.category_id)
-    if category is None:
-        raise HTTPException(status_code=404, detail="Category not found")
-
-    return category.to_public()
 
 
 @router.delete("", status_code=status.HTTP_200_OK)

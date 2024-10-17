@@ -23,7 +23,7 @@ def validate_image(file: UploadFile):
         raise HTTPException(status_code=400, detail="File size too large")
 
 
-def upload_image(file: UploadFile):
+def upload_image(file: UploadFile) -> str:
     validate_image(file)
     result = cloudinary.uploader.upload(file.file)
     if not result.get('url'):
