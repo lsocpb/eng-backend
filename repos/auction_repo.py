@@ -107,8 +107,9 @@ def get_auction_by_bid_id(bid_id: int) -> Auction | None:
 def get_latest_auctions(amount: int = 5) -> list[Auction]:
     with session_maker() as session:
         return session.query(Auction).options(
-            selectinload(Auction.product),  # load the bid_history relationship
-            selectinload(Auction.bid),
+            selectinload(Auction.product).selectinload(Product.category),
+            selectinload(Auction.bid).selectinload(Bid.bidders).selectinload(BidParticipant.user),
+            selectinload(Auction.bid).selectinload(Bid.current_bid_winner),
             selectinload(Auction.seller),
             selectinload(Auction.buyer)
         ).order_by(Auction.created_at.desc()).limit(amount).all()

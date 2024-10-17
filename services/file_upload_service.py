@@ -23,10 +23,21 @@ def validate_image(file: UploadFile):
         raise HTTPException(status_code=400, detail="File size too large")
 
 
-def upload_image(file: UploadFile) -> str:
-    validate_image(file)
-    result = cloudinary.uploader.upload(file.file)
-    if not result.get('url'):
-        raise HTTPException(status_code=500, detail="Failed to upload image")
+def upload_images(file_list: list[UploadFile]) -> list[str]:
+    images = []
 
-    return result.get('url')
+    if len(file_list) == 0:
+        raise HTTPException(status_code=400, detail="No files provided")
+    if len(file_list) > 3:
+        raise HTTPException(status_code=400, detail="Too many files provided")
+
+    for image in file_list:
+        validate_image(image)
+        result = cloudinary.uploader.upload(image.file)
+        if not result.get('url'):
+            raise HTTPException(status_code=500, detail="Failed to upload image")
+
+        print(f"Uploaded image: {result.get('url')}")
+        images.append(result.get('url'))
+
+    return images

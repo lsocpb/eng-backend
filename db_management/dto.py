@@ -45,6 +45,8 @@ class CreateAuction(BaseModel):
     end_date: datetime = Field(description="End date of auction")
     price: float = Field(ge=0.1, description="Price of product")
     product: CreateAuctionProduct = Field(description="Product details")
+    # fixme: use auth to get user_id
+    user_id: int = Field(description="ID of user")
 
     # validate if end_date is not in the past
     @field_validator("end_date")

@@ -10,5 +10,5 @@ router = APIRouter(
 
 
 @router.put(path="", status_code=status.HTTP_201_CREATED)
-async def upload_image(file: UploadFile = File(...)):
-    return {"url": services.file_upload_service.upload_image(file)}
+async def upload_image(files: list[UploadFile]):
+    return {"images": services.file_upload_service.upload_images(files)}
