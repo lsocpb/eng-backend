@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 import repos.auction_repo
 import repos.user_repo
-import services.bid_service
+import services.purcharse_service
 from db_management import dto
 from db_management.dto import PlaceBid
 from response_models.auth_responses import validate_jwt
@@ -52,6 +52,7 @@ async def delete_auction(dto: dto.DeleteAuction):
 async def get_last_auctions():
     products = repos.auction_repo.get_latest_auctions(5)
 
+    # todo
     result = []
     for product in products:
         days_left = (product.end_date - datetime.now()).days
@@ -79,7 +80,7 @@ async def get_last_auctions():
 @router.post("/bid", status_code=status.HTTP_200_OK)
 async def place_bid(dto: PlaceBid, user: dict = Depends(user_dependency)):
     try:
-        services.bid_service.place_bid(dto.auction_id, user['id'], dto.bid_value)
+        services.purcharse_service.place_bid(dto.auction_id, user['id'], dto.bid_value)
         return {"message": "Bid placed successfully"}
     except HTTPException as e:
         raise e
@@ -89,7 +90,7 @@ async def place_bid(dto: PlaceBid, user: dict = Depends(user_dependency)):
 
 @router.get("/category/{category_id}", status_code=status.HTTP_200_OK)
 async def get_auctions_by_category(category_id: int):
-    auctions = repos.auction_repo.get_auctions_by_category(category_id)
+    auctions = repos.auction_repo.get_auction_list_by_category(category_id)
     if not auctions:
         raise HTTPException(status_code=404, detail="No auctions found")
     return {"auctions": [auction.to_public() for auction in auctions]}

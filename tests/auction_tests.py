@@ -2,8 +2,7 @@ from datetime import datetime
 
 import repos.auction_repo
 import repos.user_repo
-import services.bid_service
-
+import services.purcharse_service
 from db_management.dto import CreateAuction, CreateAuctionProduct
 from utils.constants import AuctionType
 
@@ -34,4 +33,5 @@ if __name__ == '__main__':
         raise ValueError("Auction already exists")
 
     print(f"Auction: {auction} User: {user}")
-    services.bid_service.place_bid(auction, user, 51)
+
+    services.purcharse_service.place_bid(auction.id, user.id, 5.12345678)

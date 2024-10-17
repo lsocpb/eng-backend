@@ -125,6 +125,7 @@ class Auction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     auction_type = Column(SQLAlchemyEnum(AuctionType), nullable=False)
+    auction_status = Column(SQLAlchemyEnum(AuctionStatus), nullable=False, default=AuctionStatus.ACTIVE)
     quantity = Column(Integer, nullable=False)
 
     product_id = Column(Integer, ForeignKey('product.id'), nullable=False)
@@ -162,16 +163,6 @@ class Auction(Base):
             return self.buyer
         else:
             return self.bid.current_bid_winner
-
-    @hybrid_property
-    def is_biddable(self) -> bool:
-        if self.auction_type == AuctionType.BUY_NOW:
-            return False
-
-        if self.is_auction_finished:
-            return False
-
-        return True
 
     def __str__(self):
         return f"Auction: [{self.product.name} - {self.product.description} started: {self.created_at} ends: {self.end_date}]"

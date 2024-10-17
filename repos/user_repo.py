@@ -26,20 +26,15 @@ def update_user_profile_image(id: int, profile_image_url: str) -> None:
         }))
 
 
-def increase_frozen_balance(user: User, amount: float) -> None:
+def set_frozen_balance(user: User, amount: float) -> None:
     with session_maker.begin() as session:
         session.execute(Update(User).where(User.id == user.id).values({
-            User.balance_reserved: User.balance_reserved + amount
+            User.balance_reserved: amount
         }))
 
 
-def tests():
-    from db_management.database import create_db
-
-    create_db()
-
-    user = get_by_id(user_id=3)
-    print(user.email, user.profile_image_url, user.username, user.address.zip)
-
-
-tests()
+def deduct_total_balance(user: User, amount: float) -> None:
+    with session_maker.begin() as session:
+        session.execute(Update(User).where(User.id == user.id).values({
+            User.balance_total: User.balance_total - amount
+        }))

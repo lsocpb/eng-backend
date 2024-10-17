@@ -99,6 +99,11 @@ def get_full_auction_by_id(auction_id: int) -> Auction | None:
         ).where(Auction.id == auction_id).first()
 
 
+def get_auction_by_bid_id(bid_id: int) -> Auction | None:
+    with session_maker() as session:
+        return session.query(Auction).where(Auction.bid_id == bid_id).first()
+
+
 def get_latest_auctions(amount: int = 5) -> list[Auction]:
     with session_maker() as session:
         return session.query(Auction).options(
@@ -109,7 +114,7 @@ def get_latest_auctions(amount: int = 5) -> list[Auction]:
         ).order_by(Auction.created_at.desc()).limit(amount).all()
 
 
-def get_auctions_by_category(category_id: int, limit: int = 5) -> list[Auction]:
+def get_auction_list_by_category(category_id: int, limit: int = 5) -> list[Auction]:
     with session_maker() as session:
         return session.query(Auction).options(
             selectinload(Auction.product).selectinload(Product.category),  # load the bid_history relationship
@@ -120,10 +125,42 @@ def get_auctions_by_category(category_id: int, limit: int = 5) -> list[Auction]:
         ).join(Product).filter(Product.category_id == category_id).limit(limit).all()
 
 
+def add_user_auction_buyer(auction: Auction, user: User) -> None:
+    with session_maker() as session:
+        auction.buyer = user
+        session.add(auction)
+        session.commit()
+
+
+def set_auction_status(auction: Auction, status: str) -> None:
+    with session_maker() as session:
+        auction.status = status
+        session.add(auction)
+        session.commit()
+
+
 def is_user_bid_participant(auction: Auction, user: User) -> bool:
     with session_maker() as session:
         return session.query(BidParticipant).join(BidHistory, BidParticipant.bid_id == BidHistory.bid_id) \
             .filter(BidParticipant.bid_id == auction.bid.id, BidHistory.user_id == user.id).first() is not None
+
+
+# return current active auction id if user is participating in an active auction, else return 0
+def get_user_active_bid_participant(user_id: int) -> int:
+    with session_maker() as session:
+        # first get all the auctions the user is participating in
+        user_bid_participant = session.query(BidParticipant).where(BidParticipant.user_id == user_id).all()
+        if not user_bid_participant:
+            return 0
+
+        # then count how many of them are still active
+        for bid in user_bid_participant:
+            auction = get_auction_by_bid_id(bid.bid_id)
+            if auction:
+                if not auction.is_auction_finished:
+                    return auction.id
+
+        return 0
 
 
 def create_bid_history_entry(auction: Auction, user: User, amount: float) -> None:
