@@ -16,11 +16,12 @@ def delete(session: Session, user_id: int) -> None:
     session.execute(Delete(User).where(User.id == user_id))
 
 
-def update_user_profile_image(user: User, profile_image_url: str) -> None:
+def update_user_profile_image(session: Session, user: User, profile_image_url: str) -> None:
     if not object_session(user):
         raise ValueError("Session not found")
 
     user.profile_image_url = profile_image_url
+    session.commit()
 
 
 def set_frozen_balance(user: User, amount: float) -> None:

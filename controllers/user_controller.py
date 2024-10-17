@@ -8,17 +8,17 @@ from sqlalchemy.orm import Session
 
 import repos.user_repo
 import services.file_upload_service
+from db_management.database import get_db
 from db_management.models import User
 from response_models.auth_responses import validate_jwt
 from response_models.user_responses import ProfileResponse, AddressResponse, EmailSchema
-from utils.utils import old_get_db
 
 router = APIRouter(
     prefix="/user",
     tags=["user"]
 )
 
-db_dependency = Annotated[Session, Depends(old_get_db)]
+db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(validate_jwt)]
 
 load_dotenv()
@@ -46,14 +46,13 @@ async def get_user_info(user: user_dependency, db: db_dependency):
 
 
 @router.post("/upload_profile_image", status_code=status.HTTP_200_OK)
-async def upload_profile_image(user: user_dependency, db: db_dependency, file: UploadFile = File(...)):
-    user = repos.user_repo.get_by_id(db, user['id'])
+async def upload_profile_image(auth_user: user_dependency, db: db_dependency, file: UploadFile = File(...)):
+    user = repos.user_repo.get_by_id(db, auth_user['id'])
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
     image_url = services.file_upload_service.upload_images([file])
-    repos.user_repo.update_user_profile_image(user, image_url[0])
-
+    repos.user_repo.update_user_profile_image(db, user, image_url[0])
     return {"message": "Profile image uploaded successfully"}
 
 
