@@ -9,7 +9,7 @@ from starlette import status
 from response_models.auth_responses import CreateUserRequest, hash_password, Token, authenticate_user, \
     create_access_token
 from db_management.models import User, Address
-from utils.utils import get_db
+from utils.utils import old_get_db
 import response_models.auth_responses as auth
 
 router = APIRouter(
@@ -17,7 +17,7 @@ router = APIRouter(
     tags=["auth"],
 )
 
-db_dependency = Annotated[Session, Depends(get_db)]
+db_dependency = Annotated[Session, Depends(old_get_db)]
 
 
 @router.post('/register', status_code=status.HTTP_201_CREATED)

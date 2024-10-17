@@ -11,14 +11,14 @@ import services.file_upload_service
 from db_management.models import User
 from response_models.auth_responses import validate_jwt
 from response_models.user_responses import ProfileResponse, AddressResponse, EmailSchema
-from utils.utils import get_db
+from utils.utils import old_get_db
 
 router = APIRouter(
     prefix="/user",
     tags=["user"]
 )
 
-db_dependency = Annotated[Session, Depends(get_db)]
+db_dependency = Annotated[Session, Depends(old_get_db)]
 user_dependency = Annotated[dict, Depends(validate_jwt)]
 
 load_dotenv()

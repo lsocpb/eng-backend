@@ -1,7 +1,7 @@
 from db_management.database import session_maker
 
 
-def get_db():
+def old_get_db():
     db = session_maker()
     try:
         yield db

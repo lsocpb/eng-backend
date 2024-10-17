@@ -67,3 +67,7 @@ class DeleteAuction(BaseModel):
 class PlaceBid(BaseModel):
     auction_id: int = Field(description="ID of auction")
     bid_value: float = Field(ge=0.1, description="Bid value")
+
+
+class BuyNow(BaseModel):
+    auction_id: int = Field(description="ID of auction")

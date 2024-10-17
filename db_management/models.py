@@ -150,6 +150,9 @@ class Auction(Base):
         if self.end_date < datetime.now():
             return True
 
+        if self.auction_status != AuctionStatus.ACTIVE:
+            return True
+
         # Auction is finished if buyer is set in buy now auction
         if self.auction_type == AuctionType.BUY_NOW:
             return self.buyer is not None
