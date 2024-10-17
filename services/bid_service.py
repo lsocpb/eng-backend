@@ -4,10 +4,21 @@ from fastapi import HTTPException
 
 import repos.auction_repo
 import repos.user_repo
-from db_management.models import Auction, User
+from utils.constants import AuctionType
 
 
-def place_bid(auction: Auction, user: User, amount: float) -> None:
+def place_bid(auction_id: int, user_id: int, amount: float) -> None:
+    auction = repos.auction_repo.get_auction_by_id(auction_id)
+    if auction is None:
+        raise HTTPException(status_code=404, detail="Auction not found")
+
+    if auction.auction_type != AuctionType.BID:
+        raise HTTPException(status_code=400, detail="This auction is not a bid auction")
+
+    user = repos.user_repo.get_by_id(user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
     with threading.Lock():  # lock to prevent bidding simultaneously
         if not auction.is_biddable:
             raise HTTPException(status_code=400, detail="This auction is not biddable / already finished")

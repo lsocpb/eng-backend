@@ -179,6 +179,7 @@ class Auction(Base):
     def to_public(self) -> dict:
         d = {
             "id": self.id,
+            "category": self.product.category.to_public(),
             "auction_type": self.auction_type,
             "quantity": self.quantity,
             "product": self.product.to_public(),
@@ -187,12 +188,15 @@ class Auction(Base):
             "seller": self.seller.to_public_detailed(),
             "buyer": self.buyer.to_public() if self.buyer else None,
             "is_auction_finished": self.is_auction_finished,
+            "is_new": (datetime.now() - self.created_at).days < 7,
+            "days_left": (self.end_date - datetime.now()).days,
         }
 
         if self.auction_type == AuctionType.BID:
             d["bid"] = self.bid.to_public()
+            d["price"] = self.bid.current_bid_value
         else:
-            d["buy_now_price"] = self.buy_now_price
+            d["price"] = self.buy_now_price
 
         return d
 

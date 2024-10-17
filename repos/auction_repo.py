@@ -71,6 +71,13 @@ def create_auction(auction: CreateAuction, user: User) -> Auction:
         return db_auction
 
 
+def delete_auction(auction_id: int) -> None:
+    with session_maker() as session:
+        auction = session.query(Auction).where(Auction.id == auction_id).first()
+        session.delete(auction)
+        session.commit()
+
+
 def get_auction_by_id(auction_id: int) -> Auction | None:
     with session_maker() as session:
         return session.query(Auction).options(
@@ -82,14 +89,25 @@ def get_auction_by_id(auction_id: int) -> Auction | None:
         ).where(Auction.id == auction_id).first()
 
 
-def get_latest_auctions() -> list[Auction]:
+def get_latest_auctions(amount: int = 5) -> list[Auction]:
     with session_maker() as session:
         return session.query(Auction).options(
             selectinload(Auction.product),  # load the bid_history relationship
             selectinload(Auction.bid),
             selectinload(Auction.seller),
             selectinload(Auction.buyer)
-        ).order_by(Auction.created_at.desc()).limit(10).all()
+        ).order_by(Auction.created_at.desc()).limit(amount).all()
+
+
+def get_auctions_by_category(category_id: int, limit: int = 5) -> list[Auction]:
+    with session_maker() as session:
+        return session.query(Auction).options(
+            selectinload(Auction.product).selectinload(Product.category),  # load the bid_history relationship
+            selectinload(Auction.bid).selectinload(Bid.bidders).selectinload(BidParticipant.user),
+            selectinload(Auction.bid).selectinload(Bid.current_bid_winner),
+            selectinload(Auction.seller),
+            selectinload(Auction.buyer)
+        ).join(Product).filter(Product.category_id == category_id).limit(limit).all()
 
 
 def is_user_bid_participant(auction: Auction, user: User) -> bool:
