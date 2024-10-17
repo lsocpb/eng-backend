@@ -1,7 +1,5 @@
-import json
 from datetime import datetime
 
-from fastapi import UploadFile
 from pydantic import BaseModel, field_validator
 from pydantic import Field
 from pydantic import conlist
@@ -15,6 +13,14 @@ class CreateCategory(BaseModel):
     name: str = Field(max_length=255, description="Name of category")
     description: str = Field(default='', max_length=255, description="Description of category")
     icon: str = Field(default='', max_length=255, description="Icon of category")
+
+
+class GetCategory(BaseModel):
+    category_id: int = Field(description="ID of category")
+
+
+class DeleteCategory(BaseModel):
+    category_id: int = Field(description="ID of category")
 
 
 class CreateAuctionProduct(BaseModel):
@@ -50,3 +56,12 @@ class CreateAuction(BaseModel):
             raise ValueError("End date cannot be in the past")
 
         return value
+
+
+class GetAuction(BaseModel):
+    auction_id: int = Field(description="ID of auction")
+
+
+class PlaceBid(BaseModel):
+    auction_id: int = Field(description="ID of auction")
+    bid_value: float = Field(ge=0.1, description="Bid value")

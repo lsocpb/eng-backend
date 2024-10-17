@@ -5,7 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session, joinedload
 
 import repos.auction_repo
+import repos.user_repo
+import services.bid_service
 from db_management import dto
+from db_management.dto import PlaceBid
 from db_management.models import Product
 from response_models.auth_responses import validate_jwt
 from utils.utils import get_db
@@ -17,6 +20,15 @@ router = APIRouter(
 
 db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(validate_jwt)]
+
+
+@router.get("", status_code=status.HTTP_200_OK)
+async def get_auction(dto: dto.GetAuction):
+    auction = repos.auction_repo.get_auction_by_id(dto.auction_id)
+    if auction is None:
+        raise HTTPException(status_code=404, detail="Auction not found")
+
+    return auction.to_public()
 
 
 # todo: add auth
@@ -32,55 +44,26 @@ async def create_auction(db: db_dependency, auction: dto.CreateAuction):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.put("/category", status_code=status.HTTP_201_CREATED)
-async def create_category(category: dto.CreateCategory):
+
+
+
+@router.post("/bid", status_code=status.HTTP_200_OK)
+async def place_bid(dto: PlaceBid, user: dict = Depends(user_dependency)):
     try:
-        repos.auction_repo.create_category(category)
-        return {"message": "Category added successfully"}
+        auction = repos.auction_repo.get_auction_by_id(dto.auction_id)
+        if auction is None:
+            raise HTTPException(status_code=404, detail="Auction not found")
+
+        user = repos.user_repo.get_by_id(user['id'])
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        services.bid_service.place_bid(auction, user, dto.bid_value)
+        return {"message": "Bid placed successfully"}
     except HTTPException as e:
         raise e
-
-
-# @router.post("/bid", status_code=status.HTTP_200_OK)
-# async def place_bid(auction_id: int, bid_value: float, user: dict = Depends(user_dependency)):
-#     try:
-#         repos.auction_repo.place_bid(auction_id, bid_value, user)
-#         return {"message": "Bid placed successfully"}
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.get("/get", status_code=status.HTTP_200_OK)
-async def get_product(db: db_dependency, product_id: int = Query(..., description="The ID of the product to fetch")) \
-        -> Dict[str, Any]:
-    product = db.query(Product).options(joinedload(Product.seller)).filter(Product.id == product_id).first()
-    if product is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
-
-    product_data = {
-        "name": product.name,
-        "description": product.description,
-        "price": product.price,
-        "status": product.status,
-        "category_id": product.category_id,
-        "image_url_1": product.image_url_1,
-        "image_url_2": product.image_url_2,
-        "image_url_3": product.image_url_3,
-        "quantity": product.quantity,
-        "end_date": product.end_date,
-        "isBid": product.isBid,
-        "buyer_id": product.buyer_id,
-        "seller": {
-            "id": product.seller.id,
-            "username": product.seller.username,
-            "email": product.seller.email,
-            "profile_image_url": product.seller.profile_image_url
-        },
-    }
-
-    return {"product": product_data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.delete("/delete", status_code=status.HTTP_200_OK)

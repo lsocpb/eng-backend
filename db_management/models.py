@@ -21,6 +21,14 @@ class Category(Base):
     def __str__(self):
         return f"Category: [name: {self.name} desc: {self.description}]"
 
+    def to_public(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "icon": self.icon
+        }
+
 
 class Address(Base):
     __tablename__ = 'address'
@@ -51,6 +59,17 @@ class Product(Base):
     def __str__(self):
         return f"Product: [name: {self.name} desc: {self.description}]"
 
+    def to_public(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "category_id": self.category.id,
+            "image_url_1": self.image_url_1,
+            "image_url_2": self.image_url_2,
+            "image_url_3": self.image_url_3
+        }
+
 
 class Bid(Base):
     __tablename__ = 'bid'
@@ -62,6 +81,17 @@ class Bid(Base):
     current_bid_winner_id = Column(Integer, ForeignKey('user.id'))
     current_bid_winner = relationship('User')
     bidders = relationship('BidParticipant', back_populates='bid')  # Store all bidders
+
+    def __str__(self):
+        return f"Bid: [current_bid: {self.current_bid_value}]"
+
+    def to_public(self) -> dict:
+        return {
+            "id": self.id,
+            "current_bid_value": self.current_bid_value,
+            "current_bid_winner": self.current_bid_winner.to_public() if self.current_bid_winner else None,
+            "bidders": [b.user.to_public() for b in self.bidders]
+        }
 
 
 class BidParticipant(Base):
@@ -146,6 +176,26 @@ class Auction(Base):
     def __str__(self):
         return f"Auction: [{self.product.name} - {self.product.description} started: {self.created_at} ends: {self.end_date}]"
 
+    def to_public(self) -> dict:
+        d = {
+            "id": self.id,
+            "auction_type": self.auction_type,
+            "quantity": self.quantity,
+            "product": self.product.to_public(),
+            "created_at": self.created_at,
+            "end_date": self.end_date,
+            "seller": self.seller.to_public_detailed(),
+            "buyer": self.buyer.to_public() if self.buyer else None,
+            "is_auction_finished": self.is_auction_finished,
+        }
+
+        if self.auction_type == AuctionType.BID:
+            d["bid"] = self.bid.to_public()
+        else:
+            d["buy_now_price"] = self.buy_now_price
+
+        return d
+
 
 class User(Base):
     __tablename__ = 'user'
@@ -162,7 +212,7 @@ class User(Base):
 
     profile_image_url = Column(String(255), nullable=True)
 
-    balance_available = Column(FLOAT, nullable=False, default=0.0)  # Available balance for withdraw / buy now
+    balance_total = Column(FLOAT, nullable=False, default=0.0)  # Available balance for withdraw / buy now
     balance_reserved = Column(FLOAT, nullable=False, default=0.0)  # Balance reserved for bids / frozen
 
     products_sold: Mapped[List["Auction"]] = relationship(back_populates="seller", foreign_keys=[Auction.seller_id])
@@ -170,10 +220,26 @@ class User(Base):
 
     @hybrid_property
     def get_current_balance(self) -> float:
-        if self.balance_available - self.balance_reserved < 0:
+        if self.balance_total - self.balance_reserved < 0:
             return 0.0
 
-        return self.balance_available - self.balance_reserved
+        return self.balance_total - self.balance_reserved
 
     def __str__(self):
-        return f"User: [{self.username} - {self.email} | total, available, reserved: {self.balance_available}, {self.get_current_balance}, {self.balance_reserved}]"
+        return f"User: [{self.username} - {self.email} | total, available, reserved: {self.balance_total}, {self.get_current_balance}, {self.balance_reserved}]"
+
+    def to_public(self) -> dict:
+        return {
+            "id": self.id,
+            "username": self.username,
+            "profile_image_url": self.profile_image_url,
+        }
+
+    def to_public_detailed(self) -> dict:
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "profile_image_url": self.profile_image_url,
+            "last_login_date": self.last_login_date
+        }

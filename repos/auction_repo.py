@@ -19,6 +19,23 @@ def create_category(category: CreateCategory) -> Category:
         return db_category
 
 
+def get_category_by_id(category_id: int) -> Category | None:
+    with session_maker() as session:
+        return session.query(Category).where(Category.id == category_id).first()
+
+
+def get_categories() -> list[Category]:
+    with session_maker() as session:
+        return session.query(Category).all()
+
+
+def delete_category(category_id: int) -> None:
+    with session_maker() as session:
+        category = session.query(Category).where(Category.id == category_id).first()
+        session.delete(category)
+        session.commit()
+
+
 def create_auction(auction: CreateAuction, user: User) -> Auction:
     with session_maker() as session:
         product = Product(
@@ -57,8 +74,9 @@ def create_auction(auction: CreateAuction, user: User) -> Auction:
 def get_auction_by_id(auction_id: int) -> Auction | None:
     with session_maker() as session:
         return session.query(Auction).options(
-            selectinload(Auction.product),  # load the bid_history relationship
-            selectinload(Auction.bid),
+            selectinload(Auction.product).selectinload(Product.category),  # load the bid_history relationship
+            selectinload(Auction.bid).selectinload(Bid.bidders).selectinload(BidParticipant.user),
+            selectinload(Auction.bid).selectinload(Bid.current_bid_winner),
             selectinload(Auction.seller),
             selectinload(Auction.buyer)
         ).where(Auction.id == auction_id).first()
