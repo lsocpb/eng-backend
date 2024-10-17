@@ -81,7 +81,17 @@ def delete_auction(auction_id: int) -> None:
 def get_auction_by_id(auction_id: int) -> Auction | None:
     with session_maker() as session:
         return session.query(Auction).options(
-            selectinload(Auction.product).selectinload(Product.category),  # load the bid_history relationship
+            selectinload(Auction.product),
+            selectinload(Auction.bid),
+            selectinload(Auction.seller),
+            selectinload(Auction.buyer)
+        ).where(Auction.id == auction_id).first()
+
+
+def get_full_auction_by_id(auction_id: int) -> Auction | None:
+    with session_maker() as session:
+        return session.query(Auction).options(
+            selectinload(Auction.product).selectinload(Product.category),
             selectinload(Auction.bid).selectinload(Bid.bidders).selectinload(BidParticipant.user),
             selectinload(Auction.bid).selectinload(Bid.current_bid_winner),
             selectinload(Auction.seller),

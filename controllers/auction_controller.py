@@ -23,7 +23,7 @@ user_dependency = Annotated[dict, Depends(validate_jwt)]
 
 @router.get("/{auction_id}", status_code=status.HTTP_200_OK)
 async def get_auction(auction_id: int):
-    auction = repos.auction_repo.get_auction_by_id(auction_id)
+    auction = repos.auction_repo.get_full_auction_by_id(auction_id)
     if auction is None:
         raise HTTPException(status_code=404, detail="Auction not found")
 

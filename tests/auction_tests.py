@@ -29,7 +29,7 @@ if __name__ == '__main__':
     if user is None:
         raise ValueError("User not found")
 
-    auction = repos.auction_repo.get_auction_by_id(3)
+    auction = repos.auction_repo.get_full_auction_by_id(3)
     if auction is None:
         raise ValueError("Auction already exists")
 
