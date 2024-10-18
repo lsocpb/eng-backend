@@ -20,20 +20,27 @@ db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(validate_jwt)]
 
 
-@router.get("/{auction_id}", status_code=status.HTTP_200_OK)
-async def get_auction(auction_id: str, db: db_dependency):
-    if auction_id == "last":
-        products = repos.auction_repo.get_latest_auctions(db, 9)
-        return {"products": [product.to_public() for product in products]}
-    elif auction_id.isnumeric():
-        auction = repos.auction_repo.get_full_auction_by_id(db, int(auction_id))
-        if auction is None:
-            raise HTTPException(status_code=404, detail="Auction not found")
+@router.get("/id/{auction_id}", status_code=status.HTTP_200_OK)
+async def get_auction(auction_id: int, db: db_dependency):
+    auction = repos.auction_repo.get_full_auction_by_id(db, auction_id)
+    if auction is None:
+        raise HTTPException(status_code=404, detail="Auction not found")
 
-        return auction.to_public()
+    return auction.to_public()
 
-    else:
-        raise HTTPException(status_code=400, detail="Invalid auction id")
+
+@router.get("/last", status_code=status.HTTP_200_OK)
+async def get_last_auctions(db: db_dependency):
+    products = repos.auction_repo.get_latest_auctions(db, 9)
+    return {"products": [product.to_public() for product in products]}
+
+
+@router.post("/search", status_code=status.HTTP_200_OK)
+async def search_auctions(dto: dto.SearchAuctions, db: db_dependency):
+    auctions = repos.auction_repo.search_auctions_by_name(db, dto.keyword)
+    if not auctions:
+        raise HTTPException(status_code=404, detail="No auctions found")
+    return {"auctions": [auction.to_public() for auction in auctions]}
 
 
 @router.put("", status_code=status.HTTP_201_CREATED)

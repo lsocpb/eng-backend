@@ -58,6 +58,10 @@ class GetAuction(BaseModel):
     auction_id: int = Field(description="ID of auction")
 
 
+class SearchAuctions(BaseModel):
+    keyword: str = Field(description="Search term")
+
+
 class DeleteAuction(BaseModel):
     auction_id: int = Field(description="ID of auction")
 
@@ -69,3 +73,8 @@ class PlaceBid(BaseModel):
 
 class BuyNow(BaseModel):
     auction_id: int = Field(description="ID of auction")
+
+
+class PaymentCreate(BaseModel):
+    amount: float = Field(ge=0.1, description="Amount to pay")
+

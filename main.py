@@ -1,6 +1,7 @@
 import os
 
 import cloudinary
+import stripe
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -45,3 +46,6 @@ cloudinary.config(
     api_secret=CLOUDINARY_API_SECRET,
     secure=True
 )
+
+# This is your test secret API key.
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
