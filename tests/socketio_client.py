@@ -1,4 +1,6 @@
 import asyncio
+import os
+from dotenv import load_dotenv
 
 import socketio
 
@@ -21,9 +23,11 @@ async def disconnect():
 
 
 async def main():
+    load_dotenv()
+
     sio.connection_headers = {'HTTP_AUTHORIZATION': 'Bearer TestToken'}
     await sio.connect(url='http://localhost:8080', headers={
-        'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJrYXNwZWsiLCJpZCI6Niwicm9sZSI6InVzZXIiLCJleHAiOjE3Mjk1MjkwMzJ9.7ctnbpunellotveBfGyFD94YaR0GEyZAZLAIU31L7d0'})
+        'Authorization': os.getenv('SOCKETIO_CLINET_JWT')})
 
     await sio.emit('follow_auction', {'auction_id': 8})
     await sio.emit('follow_auction', {'auction_id': 8})
