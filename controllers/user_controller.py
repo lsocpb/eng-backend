@@ -12,6 +12,7 @@ from starlette.requests import Request
 import db_management.dto
 import repos.user_repo
 import services.file_upload_service
+import services.payment_gateway_service
 from db_management.database import get_db
 from db_management.models import User
 from response_models.auth_responses import validate_jwt
@@ -85,58 +86,12 @@ async def send_email(email_data: EmailSchema):
 
 @router.post("/wallet/topup", status_code=status.HTTP_200_OK)
 async def create_payment(dto: db_management.dto.PaymentCreate, user: user_dependency, db: db_dependency):
-    try:
-        YOUR_DOMAIN = "https://charfair.me"
-        checkout_session = stripe.checkout.Session.create(
-            line_items=[
-                {
-                    'price_data': {
-                        'currency': 'pln',
-                        'product_data': {
-                            'name': 'Doładowanie portfela CharFair',
-                        },
-                        'unit_amount': int(dto.amount * 100)
-                    },
-                    'quantity': 1
-                }
-            ],
-            mode='payment',
-            success_url=YOUR_DOMAIN + '/success.html',
-            cancel_url=YOUR_DOMAIN + '/cancel.html',
-            automatic_tax={'enabled': False},
-            metadata={'user_id': user['id']}
-        )
-    except Exception as e:
-        return str(e)
-
-    return {"payment_url": checkout_session.url}
+    return {"payment_url": services.payment_gateway_service.create_payment_url(db, dto.amount, user['id'])}
 
 
 @router.post("/wallet/webhook", status_code=status.HTTP_200_OK)
-async def stripe_webhook(request: Request):
+async def stripe_webhook(db: db_dependency, request: Request):
     body = await request.body()
     body_str = body.decode("utf-8")
-    event = None
 
-    try:
-        event = stripe.Event.construct_from(
-            json.loads(body_str), stripe.api_key
-        )
-    except ValueError as e:
-        # Invalid payload
-        raise HTTPException(status_code=400, detail="Invalid payload")
-
-    # Handle the event
-    if event.type == 'checkout.session.completed':
-        payment_intent = event.data.object  # contains a stripe.PaymentIntent
-        print(f"Payment checkout succeeded: {payment_intent}")
-        # Then define and call a method to handle the successful payment intent.
-        # handle_payment_intent_succeeded(payment_intent)
-    elif event.type == 'payment_method.attached':
-        payment_method = event.data.object  # contains a stripe.PaymentMethod
-        print(f"Payment method attached: {payment_method}")
-        # Then define and call a method to handle the successful attachment of a PaymentMethod.
-        # handle_payment_method_attached(payment_method)
-    # ... handle other event types
-    else:
-        print('Unhandled event type {}'.format(event.type))
+    services.payment_gateway_service.stripe_payment_webhook(db, body_str)

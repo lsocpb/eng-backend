@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import List
+from uuid import uuid4
 
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, FLOAT
 from sqlalchemy import Enum as SQLAlchemyEnum
@@ -198,10 +199,12 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     role = Column(SQLAlchemyEnum(UserRole), default=UserRole.USER, nullable=True)
+    account_type = Column(SQLAlchemyEnum(UserAccountType), default=UserAccountType.PERSONAL, nullable=True)
     password_hash = Column(String(255), nullable=False)
     username = Column(String(255), unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     last_login_date = Column(DateTime, nullable=False)
+    wallet_transactions: Mapped[List["WalletTransaction"]] = relationship("WalletTransaction", back_populates="user")
 
     address_id: Mapped[int] = mapped_column(ForeignKey("address.id"), nullable=False)
     address: Mapped["Address"] = relationship()
@@ -238,4 +241,33 @@ class User(Base):
             "email": self.email,
             "profile_image_url": self.profile_image_url,
             "last_login_date": self.last_login_date
+        }
+
+
+class WalletTransaction(Base):
+    __tablename__ = 'wallet_transaction'
+
+    id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String(255), nullable=False, default=lambda x: str(uuid4()))
+    stripe_payment_intent_id = Column(String(255), nullable=True)
+    stripe_checkout_session_id = Column(String(255), nullable=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
+    user: Mapped["User"] = relationship('User')
+
+    amount = Column(FLOAT, nullable=False)
+    transaction_status = Column(SQLAlchemyEnum(TransactionStatus), nullable=False, default=TransactionStatus.PENDING)
+    created_at = Column(DateTime, nullable=False, default=datetime.now)
+    receipt_url = Column(String(255), nullable=True)
+
+    def __str__(self):
+        return f"WalletTransaction: [{self.user.username} - {self.amount} - {self.transaction_type}]"
+
+    def to_public(self) -> dict:
+        return {
+            "id": self.id,
+            "user": self.user.to_public(),
+            "amount": self.amount,
+            "transaction_type": self.transaction_type,
+            "created_at": self.created_at,
+            "description": self.description
         }

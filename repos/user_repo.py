@@ -1,7 +1,7 @@
 from sqlalchemy import Delete
 from sqlalchemy.orm import selectinload, Session, object_session
 
-from db_management.models import User
+from db_management.models import User, WalletTransaction
 
 
 def get_by_id(session: Session, user_id: int) -> User:
@@ -38,3 +38,21 @@ def deduct_total_balance(user: User, amount: float) -> None:
         raise ValueError("Insufficient balance")
 
     user.balance_total -= amount
+
+
+def create_wallet_transaction(session: Session, user: User, amount: float, stripe_payment_id: str) -> None:
+    if not object_session(user):
+        raise ValueError("Session not found")
+
+    transaction = WalletTransaction(user_id=user.id, amount=amount, stripe_payment_id=stripe_payment_id)
+
+    session.add(transaction)
+    session.commit()
+
+
+def get_wallet_transaction_by_uuid(session: Session, uuid: str) -> WalletTransaction:
+    return session.query(WalletTransaction).where(WalletTransaction.uuid == uuid).first()
+
+
+def get_wallet_transaction_by_stripe_payment_id(session: Session, stripe_payment_id: str) -> WalletTransaction:
+    return session.query(WalletTransaction).where(WalletTransaction.stripe_payment_id == stripe_payment_id).first()
