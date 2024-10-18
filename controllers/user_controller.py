@@ -127,9 +127,9 @@ async def stripe_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Invalid payload")
 
     # Handle the event
-    if event.type == 'payment_intent.succeeded':
+    if event.type == 'checkout.session.completed':
         payment_intent = event.data.object  # contains a stripe.PaymentIntent
-        print(f"Payment intent succeeded: {payment_intent}")
+        print(f"Payment checkout succeeded: {payment_intent}")
         # Then define and call a method to handle the successful payment intent.
         # handle_payment_intent_succeeded(payment_intent)
     elif event.type == 'payment_method.attached':
