@@ -44,7 +44,7 @@ def create_wallet_transaction(session: Session, user: User, amount: float, strip
     if not object_session(user):
         raise ValueError("Session not found")
 
-    transaction = WalletTransaction(user_id=user.id, amount=amount, stripe_payment_id=stripe_payment_id)
+    transaction = WalletTransaction(user_id=user.id, amount=amount)
 
     session.add(transaction)
     session.commit()

@@ -52,6 +52,7 @@ def stripe_payment_webhook(session: Session, raw_data: str):
 
     with open('webhook_event.json', 'w') as f:
         f.write(json.dumps(event, separators=(',', ':')))
+
     def get_wallet_transaction(sess: Session, stripe_payment_id: str):
         transaction = repos.user_repo.get_wallet_transaction_by_stripe_payment_id(sess, stripe_payment_id)
         if transaction is None:
