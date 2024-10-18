@@ -40,19 +40,18 @@ def deduct_total_balance(user: User, amount: float) -> None:
     user.balance_total -= amount
 
 
-def create_wallet_transaction(session: Session, user: User, amount: float, stripe_payment_id: str) -> None:
+def create_wallet_transaction(session: Session, user: User, amount: float, uuid: str, checkout_session_id: str) -> None:
     if not object_session(user):
         raise ValueError("Session not found")
 
-    transaction = WalletTransaction(user_id=user.id, amount=amount)
+    transaction = WalletTransaction(user_id=user.id, amount=amount, uuid=uuid,
+                                    stripe_checkout_session_id=checkout_session_id)
 
     session.add(transaction)
     session.commit()
 
 
 def get_wallet_transaction_by_uuid(session: Session, uuid: str) -> WalletTransaction:
-    return session.query(WalletTransaction).where(WalletTransaction.uuid == uuid).first()
-
-
-def get_wallet_transaction_by_stripe_payment_id(session: Session, stripe_payment_id: str) -> WalletTransaction:
-    return session.query(WalletTransaction).where(WalletTransaction.stripe_payment_id == stripe_payment_id).first()
+    return session.query(WalletTransaction).where(WalletTransaction.uuid == uuid).options(
+        selectinload(WalletTransaction.user)
+    ).first()

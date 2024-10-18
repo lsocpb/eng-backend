@@ -1,17 +1,20 @@
 import json
+import uuid
 
 import stripe
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException
 
 import repos.user_repo
-from utils.constants import DOMAIN_BASE
+from utils.constants import DOMAIN_BASE, TransactionStatus, STRIPE_LISTENING_EVENTS
 
 
 def create_payment_url(session: Session, amount: float, user_id: str):
     user = repos.user_repo.get_by_id(session, int(user_id))
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
+
+    transaction_uuid = str(uuid.uuid4())
 
     checkout_session = stripe.checkout.Session.create(
         line_items=[
@@ -30,15 +33,18 @@ def create_payment_url(session: Session, amount: float, user_id: str):
         success_url=DOMAIN_BASE + '/success.html',
         cancel_url=DOMAIN_BASE + '/cancel.html',
         automatic_tax={'enabled': False},
-        metadata={'user_id': user_id}
+        metadata={'transaction_uuid': transaction_uuid},
+        payment_intent_data={
+            'metadata': {
+                'transaction_uuid': transaction_uuid
+            }
+        }
     )
-    stripe_payment_id = checkout_session.id
 
-    with open('payment_session.json', 'w') as f:
-        f.write(json.dumps(checkout_session, separators=(',', ':')))
-    repos.user_repo.create_wallet_transaction(session, user, amount, stripe_payment_id)
+    repos.user_repo.create_wallet_transaction(session, user, amount, uuid=transaction_uuid,
+                                              checkout_session_id=checkout_session.id)
 
-    return {"payment_url": checkout_session.url}
+    return checkout_session.url
 
 
 def stripe_payment_webhook(session: Session, raw_data: str):
@@ -50,35 +56,38 @@ def stripe_payment_webhook(session: Session, raw_data: str):
         # Invalid payload
         raise HTTPException(status_code=400, detail="Invalid payload from Stripe" + str(e))
 
-    with open('webhook_event.json', 'w') as f:
-        f.write(json.dumps(event, separators=(',', ':')))
+    # Log all events for debugging purposes
+    with open('webhook_event.json', 'a') as f:
+        f.write(json.dumps(event, separators=(',', ':')) + '\n')
 
-    def get_wallet_transaction(sess: Session, stripe_payment_id: str):
-        transaction = repos.user_repo.get_wallet_transaction_by_stripe_payment_id(sess, stripe_payment_id)
-        if transaction is None:
-            raise HTTPException(status_code=404, detail="Transaction not found")
+    if event['type'] not in STRIPE_LISTENING_EVENTS:
+        print(f"Stripe WEBHOOK: Event type {event.type} not supported")
+        return
 
-        return transaction
+    # Get transaction_uuid from metadata
+    if not event.data.object['metadata']:
+        raise HTTPException(status_code=400, detail="No metadata found")
+    if not event.data.object['metadata']['transaction_uuid']:
+        raise HTTPException(status_code=400, detail="No transaction_uuid found")
+
+    transaction_uuid = event.data.object['metadata']['transaction_uuid']
+    transaction = repos.user_repo.get_wallet_transaction_by_uuid(session, transaction_uuid)
+    if transaction is None:
+        raise HTTPException(status_code=404, detail="Transaction not found")
 
     # Handle the event
-    if event.type == 'checkout.session.completed':
-        print('Payment was successful.' + json.dumps(event.data.object))
-        payment_intent = event.data.object  # contains a stripe.PaymentIntent
-        metadata = payment_intent['metadata']
-        if not metadata:
-            print('No metadata found')
-            return
-        user_id = metadata['user_id']
+    print(f"Stripe WEBHOOK: Received event: id={event.id}, type={event.type}")
 
-        user = repos.user_repo.get_by_id(session, user_id)
-        if user is None:
-            # minify this error
-            minify_json = json.dumps({"message": "User not found"})
-            raise HTTPException(status_code=404, detail="User not found")
-
+    if event.type == 'payment_intent.created':
+        print(f"Transaction uuid: {transaction_uuid} - Payment intent created")
+        transaction.stripe_payment_intent_id = event.data.object['id']
     elif event.type == 'charge.succeeded':
-        wallet_transaction = get_wallet_transaction(session, event.data.object['payment_intent'])
-    else:
-        print('Unhandled event type {}'.format(event.type))
+        print(f"Transaction uuid: {transaction_uuid} - Charge succeeded")
+        transaction.receipt_url = event.data.object['receipt_url']
+    elif event.type == 'payment_intent.succeeded':
+        print(f"Transaction uuid: {transaction_uuid} - Payment intent succeeded")
+        transaction.transaction_status = TransactionStatus.SUCCESS
+        transaction.user.balance_total += transaction.amount
+        # todo: send email to user
 
-    print("event type: " + event.type + " | " + json.dumps(event.data.object, separators=(',', ':')))
+    session.commit()

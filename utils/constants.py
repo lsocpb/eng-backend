@@ -1,6 +1,7 @@
 from enum import Enum
 
 DOMAIN_BASE = "https://charfair.me"
+STRIPE_LISTENING_EVENTS = ['charge.succeeded', 'payment_intent.succeeded', 'payment_intent.created']
 
 
 class TransactionStatus(str, Enum):

@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import List
-from uuid import uuid4
 
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, FLOAT
 from sqlalchemy import Enum as SQLAlchemyEnum
@@ -41,6 +40,14 @@ class Address(Base):
 
     def __str__(self):
         return f"[Address: {self.street} {self.city} {self.zip}]"
+
+    def to_public(self) -> dict:
+        return {
+            "id": self.id,
+            "street": self.street,
+            "city": self.city,
+            "zip": self.zip
+        }
 
 
 class Product(Base):
@@ -243,12 +250,26 @@ class User(Base):
             "last_login_date": self.last_login_date
         }
 
+    def to_private(self) -> dict:
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "profile_image_url": self.profile_image_url,
+            "last_login_date": self.last_login_date,
+            "role": self.role,
+            "account_type": self.account_type,
+            "address": self.address.to_public(),
+            "balance_total": self.balance_total,
+            "balance_reserved": self.balance_reserved,
+        }
+
 
 class WalletTransaction(Base):
     __tablename__ = 'wallet_transaction'
 
     id = Column(Integer, primary_key=True, index=True)
-    uuid = Column(String(255), nullable=False, default=lambda x: str(uuid4()))
+    uuid = Column(String(255), nullable=False)
     stripe_payment_intent_id = Column(String(255), nullable=True)
     stripe_checkout_session_id = Column(String(255), nullable=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('user.id'), nullable=False)

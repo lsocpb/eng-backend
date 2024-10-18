@@ -1,8 +1,6 @@
-import json
 import os
 from typing import Annotated
 
-import stripe
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sendgrid import Mail, SendGridAPIClient
@@ -14,9 +12,8 @@ import repos.user_repo
 import services.file_upload_service
 import services.payment_gateway_service
 from db_management.database import get_db
-from db_management.models import User
 from response_models.auth_responses import validate_jwt
-from response_models.user_responses import ProfileResponse, AddressResponse, EmailSchema
+from response_models.user_responses import EmailSchema
 
 router = APIRouter(
     prefix="/user",
@@ -33,21 +30,15 @@ SENDGRID_TO_EMAIL = os.getenv("SENDGRID_TO_EMAIL")
 
 
 @router.get("/me", status_code=status.HTTP_200_OK)
-async def get_user_info(user: user_dependency, db: db_dependency):
-    if user is None:
+async def get_user_info(db_user: user_dependency, db: db_dependency):
+    if db_user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
 
-    user_id = user['id']
+    user = repos.user_repo.get_by_id(db, db_user['id'])
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    details = db.query(User).filter(User.id == user_id).first()
-
-    address = AddressResponse(street=details.address.street, city=details.address.city, zip=details.address.zip)
-
-    if details is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Details not found")
-
-    return ProfileResponse(username=details.username, email=details.email, profile_image_url=details.profile_image_url,
-                           address=address, role=details.role.value)
+    return user.to_private()
 
 
 @router.post("/upload_profile_image", status_code=status.HTTP_200_OK)
