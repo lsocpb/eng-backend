@@ -95,7 +95,7 @@ async def get_user_sales(auth_user: user_dependency, db: db_dependency):
 
 @router.post("/wallet/topup", status_code=status.HTTP_200_OK)
 async def create_payment(dto: db_management.dto.PaymentCreate, user: user_dependency, db: db_dependency):
-    return {"payment_url": services.payment_gateway_service.create_payment_url(db, dto.amount, user['id'])}
+    return {"payment_url": services.stripe_service.create_payment_url(db, dto.amount, user['id'])}
 
 
 @router.post("/wallet/webhook", status_code=status.HTTP_200_OK)
@@ -103,7 +103,7 @@ async def stripe_webhook(db: db_dependency, request: Request):
     body = await request.body()
     body_str = body.decode("utf-8")
 
-    services.payment_gateway_service.stripe_payment_webhook(db, body_str)
+    services.stripe_service.stripe_payment_webhook(db, body_str)
 
 
 @router.get("/wallet/transactions", status_code=status.HTTP_200_OK)

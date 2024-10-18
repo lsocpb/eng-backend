@@ -1,11 +1,16 @@
+import asyncio
 import os
 
 import cloudinary
 import stripe
+import uvicorn
+from aiohttp import web
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
+import services.socketio_service
+from utils.constants import fastapi_logger as logger
 from controllers import auth_controller, user_controller, category_controller, auction_controller, \
     file_upload_controller
 from db_management import models
@@ -17,7 +22,6 @@ app.include_router(user_controller.router)
 app.include_router(category_controller.router)
 app.include_router(auction_controller.router)
 app.include_router(file_upload_controller.router)
-
 
 origins = [
     "*"
@@ -49,3 +53,36 @@ cloudinary.config(
 
 # This is your test secret API key.
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
+
+async def start_fastapi():
+    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info", proxy_headers=True,
+                            forwarded_allow_ips='*')
+    server = uvicorn.Server(config)
+    await server.serve()
+
+
+async def start_socketio():
+    await web._run_app(services.socketio_service.app)
+
+
+async def start():
+    await asyncio.gather(start_socketio())
+
+
+if __name__ == '__main__':
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        # Gather both FastAPI and SocketIO tasks to run concurrently
+        loop.run_until_complete(
+            asyncio.gather(
+                start_fastapi(),
+                start_socketio()
+            )
+        )
+    except KeyboardInterrupt:
+        logger.info("Shutting down server")
