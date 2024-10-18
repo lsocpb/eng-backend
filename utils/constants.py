@@ -40,8 +40,7 @@ def initialize_logger():
     # Usuń domyślne wyjście do konsoli, aby uniknąć duplikatów
     logger.remove()
 
-    # Logowanie do konsoli (sys.stdout) z poziomem INFO
-    # Dodanie logowania do konsoli dla SOCKETIO
+    # SocketIO log console
     logger.add(
         sys.stdout,  # Konsola
         format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> <red>|</red> <cyan>{level: <5}</cyan> <red>|</red> <blue>SOCKET.IO</blue> <red>|</red> {message}",
@@ -50,28 +49,28 @@ def initialize_logger():
         colorize=True
     )
 
-    # Dodanie logowania do pliku dla SOCKETIO
+    # SocketIO log file
     logger.add(
         "logs/socketio.log",  # Plik
-        format="{time} | {level: <5} | {message}",
-        level="INFO",
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <5} | {message}",
+        level="TRACE",
         filter=lambda record: "SOCKETIO" in record["extra"]
     )
 
-    # Dodanie logowania do konsoli dla FASTAPI
+    # FastAPI log console
     logger.add(
-        sys.stdout,  # Konsola
+        sys.stdout,
         format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> <red>|</red> <cyan>{level: <5}</cyan> <red>|</red> <blue>FASTAPI</blue> <red>|</red> {message}",
         level="INFO",
         filter=lambda record: "FASTAPI" in record["extra"],
         colorize=True
     )
 
-    # Dodanie logowania do pliku dla FASTAPI
+    # FastAPI log file
     logger.add(
-        "logs/fastapi.log",  # Plik
-        format="{time} | {level: <5} | {message}",
-        level="INFO",
+        "logs/fastapi.log",
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <5} | {message}",
+        level="TRACE",
         filter=lambda record: "FASTAPI" in record["extra"]
     )
 

@@ -1,9 +1,9 @@
 import socketio
 from aiohttp import web
 from jose import jwt
-from utils.constants import socketio_logger as logger
 
 from response_models.auth_responses import SECRET_KEY, ALGORITHM
+from utils.constants import socketio_logger as logger
 
 sio = socketio.AsyncServer(cors_allowed_origins="*")
 app = web.Application()
@@ -113,7 +113,3 @@ async def follow_auction(sid, data):
         return
 
     await socket_user.follow_auction(auction_id)
-
-
-if __name__ == '__main__':
-    web.run_app(app)
