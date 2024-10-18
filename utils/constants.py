@@ -7,6 +7,11 @@ DOMAIN_BASE = "https://charfair.me"
 STRIPE_LISTENING_EVENTS = ['charge.succeeded', 'payment_intent.succeeded', 'payment_intent.created']
 
 
+class WebSocketAction(str, Enum):
+    BID_PRICE_UPDATE = 'bid_price_update'
+    BID_WINNER_UPDATE = 'bid_winner_update'
+
+
 class TransactionStatus(str, Enum):
     PENDING = 'pending'
     SUCCESS = 'success'

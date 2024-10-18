@@ -118,7 +118,7 @@ def get_user_active_bid_participant(session: Session, user_id: int) -> int:
 
     # then count how many of them are still active
     for bid in user_bid_participant:
-        auction = get_auction_by_bid_id(bid.bid_id)
+        auction = get_auction_by_bid_id(session, bid.bid_id)
         if auction:
             if not auction.is_auction_finished:
                 return auction.id

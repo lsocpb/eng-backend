@@ -7,10 +7,11 @@ import db_management.dto
 import repos.auction_repo
 import repos.user_repo
 from db_management.models import Product, Auction, Bid
+from services.socketio_service import socket_manager, SocketManager
 from utils.constants import AuctionType, AuctionStatus
 
 
-def place_bid(session: Session, auction_id: int, user_id: int, amount: float) -> None:
+async def place_bid(session: Session, auction_id: int, user_id: int, amount: float) -> None:
     user = repos.user_repo.get_by_id(session, user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -47,6 +48,11 @@ def place_bid(session: Session, auction_id: int, user_id: int, amount: float) ->
         if user.id == auction.buyer_id:
             raise HTTPException(status_code=400, detail="You are already the highest bidder")
 
+        # check if winner changed
+        if auction.buyer_id != user.id:
+            # send notification to the previous winner
+            await socket_manager.bid_winner_update_action(auction.bid.current_bid_winner_id)
+
         # real logic
         repos.auction_repo.add_bid_participant(session, auction, user)
         repos.auction_repo.create_bid_history_entry(session, auction, user, amount)
@@ -54,6 +60,12 @@ def place_bid(session: Session, auction_id: int, user_id: int, amount: float) ->
 
         # freeze the amount of new total bid price in the user's balance
         repos.user_repo.set_frozen_balance(user, new_bid_value)
+
+        # send notification for all participants online
+        await SocketManager.bid_price_update_action(auction_id, new_bid_value)
+
+        # save the transaction
+        session.commit()
 
 
 def buy_now(session: Session, auction_id: int, user_id: int) -> None:

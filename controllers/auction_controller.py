@@ -58,13 +58,13 @@ async def delete_auction(dto: dto.DeleteAuction, db: db_dependency):
 
 @router.post("/bid", status_code=status.HTTP_200_OK)
 async def place_bid(dto: PlaceBid, user: user_dependency, db: db_dependency):
-    services.purcharse_service.place_bid(db, dto.auction_id, user['id'], dto.bid_value)
+    await services.auction_service.place_bid(db, dto.auction_id, user['id'], dto.bid_value)
     return {"message": "Bid placed successfully"}
 
 
 @router.post("/buy_now", status_code=status.HTTP_200_OK)
 async def buy_now(dto: dto.BuyNow, user: user_dependency, db: db_dependency):
-    services.purcharse_service.buy_now(db, dto.auction_id, user['id'])
+    services.auction_service.buy_now(db, dto.auction_id, user['id'])
     return {"message": "Product bought successfully"}
 
 
