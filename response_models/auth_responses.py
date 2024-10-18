@@ -22,20 +22,6 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
 internal_auth_token = OAuth2PasswordBearer(tokenUrl="auth/internal/token")
 
 
-class AddressRequestCreate(BaseModel):
-    street: str
-    city: str
-    zip: str
-
-
-class CreateUserRequest(BaseModel):
-    username: str
-    password: str
-    email: str
-    phone: str
-    address: AddressRequestCreate
-
-
 class Token(BaseModel):
     access_token: str
     token_type: str

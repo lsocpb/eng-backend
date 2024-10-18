@@ -78,3 +78,16 @@ class BuyNow(BaseModel):
 class PaymentCreate(BaseModel):
     amount: float = Field(ge=0.1, description="Amount to pay")
 
+
+class AddressRequestCreate(BaseModel):
+    street: str = Field(max_length=255)
+    city: str = Field(max_length=255)
+    zip: str = Field(max_length=255)
+
+
+class CreateUserRequest(BaseModel):
+    username: str = Field(max_length=20)
+    password: str = Field(max_length=32)
+    email: str = Field(max_length=255)
+    phone: str = Field(max_length=20)
+    address: AddressRequestCreate = Field(description="Address details")

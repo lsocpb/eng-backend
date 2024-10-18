@@ -286,9 +286,10 @@ class WalletTransaction(Base):
     def to_public(self) -> dict:
         return {
             "id": self.id,
-            "user": self.user.to_public(),
-            "amount": self.amount,
-            "transaction_type": self.transaction_type,
+            "uuid": self.uuid,
             "created_at": self.created_at,
-            "description": self.description
+            "amount": self.amount,
+            "transaction_status": self.transaction_status,
+            "receipt_url": self.receipt_url,
+            "stripe_payment_id": self.stripe_payment_intent_id,
         }

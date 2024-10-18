@@ -10,7 +10,7 @@ from starlette.requests import Request
 import db_management.dto
 import repos.user_repo
 import services.file_upload_service
-import services.payment_gateway_service
+import services.stripe_service
 from db_management.database import get_db
 from response_models.auth_responses import validate_jwt
 from response_models.user_responses import EmailSchema
@@ -75,6 +75,24 @@ async def send_email(email_data: EmailSchema):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.get("/purchases", status_code=status.HTTP_200_OK)
+async def get_user_purchases(auth_user: user_dependency, db: db_dependency):
+    user = repos.user_repo.get_by_id(db, auth_user['id'])
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"purchases": [purchase.to_public() for purchase in user.products_bought]}
+
+
+@router.get("/sales", status_code=status.HTTP_200_OK)
+async def get_user_sales(auth_user: user_dependency, db: db_dependency):
+    user = repos.user_repo.get_by_id(db, auth_user['id'])
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"sales": [sale.to_public() for sale in user.products_sold]}
+
+
 @router.post("/wallet/topup", status_code=status.HTTP_200_OK)
 async def create_payment(dto: db_management.dto.PaymentCreate, user: user_dependency, db: db_dependency):
     return {"payment_url": services.payment_gateway_service.create_payment_url(db, dto.amount, user['id'])}
@@ -86,3 +104,12 @@ async def stripe_webhook(db: db_dependency, request: Request):
     body_str = body.decode("utf-8")
 
     services.payment_gateway_service.stripe_payment_webhook(db, body_str)
+
+
+@router.get("/wallet/transactions", status_code=status.HTTP_200_OK)
+async def get_wallet_transactions(auth_user: user_dependency, db: db_dependency):
+    user = repos.user_repo.get_by_id(db, auth_user['id'])
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"transactions": [transaction.to_public() for transaction in user.wallet_transactions]}

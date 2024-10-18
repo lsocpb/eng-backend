@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 import repos.auction_repo
 import repos.user_repo
-import services.purcharse_service
+import services.auction_service
 from db_management import dto
 from db_management.database import get_db
 from db_management.dto import PlaceBid
