@@ -52,7 +52,7 @@ def initialize_logger():
 
     # Dodanie logowania do pliku dla SOCKETIO
     logger.add(
-        "../logs/socketio.log",  # Plik
+        "/logs/socketio.log",  # Plik
         format="{time} | {level: <5} | {message}",
         level="INFO",
         filter=lambda record: "SOCKETIO" in record["extra"]
@@ -69,7 +69,7 @@ def initialize_logger():
 
     # Dodanie logowania do pliku dla FASTAPI
     logger.add(
-        "../logs/fastapi.log",  # Plik
+        "/logs/fastapi.log",  # Plik
         format="{time} | {level: <5} | {message}",
         level="INFO",
         filter=lambda record: "FASTAPI" in record["extra"]
