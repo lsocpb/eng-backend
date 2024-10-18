@@ -10,11 +10,11 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 import services.socketio_service
-from utils.constants import fastapi_logger as logger
 from controllers import auth_controller, user_controller, category_controller, auction_controller, \
     file_upload_controller
 from db_management import models
 from db_management.database import engine
+from utils.constants import fastapi_logger as logger
 
 app = FastAPI()
 app.include_router(auth_controller.router)
@@ -71,7 +71,8 @@ async def start():
 
 
 if __name__ == '__main__':
-    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    if os.name == 'nt':
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
     try:
         loop = asyncio.new_event_loop()
