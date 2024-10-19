@@ -91,7 +91,7 @@ class SocketManager:
     async def bid_winner_update_action(self, user_id: str):
         user = self.get_user_by_user_id(user_id)
         if not user:
-            logger.error(f"Failed to send bid_winner_update to {user_id}")
+            logger.trace(f"Failed to send bid_winner_update to {user_id} - user not found")
             return
 
         await sio.emit(WebSocketAction.BID_WINNER_UPDATE, data={}, room=user.sid)

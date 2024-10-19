@@ -89,5 +89,8 @@ def stripe_payment_webhook(session: Session, raw_data: str):
         transaction.transaction_status = TransactionStatus.SUCCESS
         transaction.user.balance_total += transaction.amount
         # todo: send email to user
+    elif event.type == 'checkout.session.expired':
+        print(f"Transaction uuid: {transaction_uuid} - Checkout session expired")
+        transaction.transaction_status = TransactionStatus.EXPIRED
 
     session.commit()

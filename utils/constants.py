@@ -4,7 +4,7 @@ from enum import Enum
 from loguru import logger
 
 DOMAIN_BASE = "https://charfair.me"
-STRIPE_LISTENING_EVENTS = ['charge.succeeded', 'payment_intent.succeeded', 'payment_intent.created']
+STRIPE_LISTENING_EVENTS = ['charge.succeeded', 'payment_intent.succeeded', 'payment_intent.created', 'checkout.session.expired']
 
 
 class WebSocketAction(str, Enum):
