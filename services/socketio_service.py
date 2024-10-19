@@ -88,16 +88,23 @@ class SocketManager:
     async def bid_price_update_action(auction_id: int, new_bid_value: float):
         await sio.emit(WebSocketAction.BID_PRICE_UPDATE, data={"price": new_bid_value}, room=auction_id)
 
-    def bid_winner_update_action(self, user_id: str):
+    async def bid_winner_update_action(self, user_id: str):
         user = self.get_user_by_user_id(user_id)
         if not user:
             logger.error(f"Failed to send bid_winner_update to {user_id}")
             return
 
-        sio.emit(WebSocketAction.BID_WINNER_UPDATE, data={}, room=user.sid)
+        await sio.emit(WebSocketAction.BID_WINNER_UPDATE, data={}, room=user.sid)
 
 
-socket_manager = SocketManager()
+socket_manager_obj = None
+
+
+def get_socket_manager():
+    global socket_manager_obj
+    if socket_manager_obj is None:
+        socket_manager_obj = SocketManager()
+    return socket_manager_obj
 
 
 @sio.event
@@ -110,23 +117,23 @@ async def connect(sid, environ):
         await sio.disconnect(sid)
         return False
 
-    socket_manager.add_user(sid, socket_user)
+    get_socket_manager().add_user(sid, socket_user)
     logger.info(f"{socket_user} connected")
 
 
 @sio.event
 async def disconnect(sid):
-    user = socket_manager.get_user(sid)
+    user = get_socket_manager().get_user(sid)
     if user:
         logger.info(f"{user} disconnected")
-        socket_manager.remove_user(sid)
+        get_socket_manager().remove_user(sid)
     else:
         logger.trace(f"{sid} disconnected")
 
 
 @sio.event
 async def follow_auction(sid, data):
-    socket_user: SocketUser = socket_manager.get_user(sid)
+    socket_user: SocketUser = get_socket_manager().get_user(sid)
     if socket_user is None:
         logger.trace(f"unauthorized follow_auction: {sid}")
         return

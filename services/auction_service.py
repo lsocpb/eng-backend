@@ -7,7 +7,7 @@ import db_management.dto
 import repos.auction_repo
 import repos.user_repo
 from db_management.models import Product, Auction, Bid
-from services.socketio_service import socket_manager, SocketManager
+from services.socketio_service import get_socket_manager, SocketManager
 from utils.constants import AuctionType, AuctionStatus
 
 
@@ -51,7 +51,7 @@ async def place_bid(session: Session, auction_id: int, user_id: int, amount: flo
         # check if winner changed
         if auction.buyer_id != user.id:
             # send notification to the previous winner
-            await socket_manager.bid_winner_update_action(auction.bid.current_bid_winner_id)
+            await get_socket_manager().bid_winner_update_action(auction.bid.current_bid_winner_id)
 
         # real logic
         repos.auction_repo.add_bid_participant(session, auction, user)
