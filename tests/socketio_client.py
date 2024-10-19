@@ -24,7 +24,7 @@ async def bid_price_update(data):
 
 @sio.event
 async def bid_winner_update(data):
-    print(f'SOCKETIO CLIENT: bid winner update received "{data}"')
+    print(f'SOCKETIO CLIENT: bid winner updated')
 
 
 @sio.event
@@ -35,8 +35,8 @@ async def disconnect():
 async def main():
     load_dotenv()
 
-    await sio.connect(url='https://ws.charfair.me', headers={'Authorization': os.getenv('SOCKETIO_CLINET_JWT')})
-    # await sio.connect(url='http://localhost:8080', headers={'Authorization': os.getenv('SOCKETIO_CLINET_JWT')})
+    # await sio.connect(url='https://ws.charfair.me', headers={'Authorization': os.getenv('SOCKETIO_CLINET_JWT')})
+    await sio.connect(url='http://localhost:8080', headers={'Authorization': os.getenv('SOCKETIO_CLINET_JWT')})
 
     await sio.emit('follow_auction', {'auction_id': 8})
     await sio.wait()

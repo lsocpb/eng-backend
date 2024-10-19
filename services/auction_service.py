@@ -30,10 +30,11 @@ async def place_bid(session: Session, auction_id: int, user_id: int, amount: flo
         if auction.is_auction_finished:
             raise HTTPException(status_code=400, detail="This auction is not biddable / already finished")
 
+        current_bid_winner = auction.bid.current_bid_winner
+
         # Validate if user already has an active bid
         # If so, check if user is trying to bid on the same auction
-        user_bidder_auction_id = repos.auction_repo.get_user_active_bid_participant(session, user_id=user.id)
-        if user_bidder_auction_id != 0 and user_bidder_auction_id != auction.id:
+        if repos.auction_repo.is_user_participating_in_different_active_bid(session, auction, user):
             raise HTTPException(status_code=400, detail="You can only bid on one auction at a time")
 
         # User should have at least the current bid value including the amount he wants to bid
@@ -45,11 +46,11 @@ async def place_bid(session: Session, auction_id: int, user_id: int, amount: flo
         if user.id == auction.seller_id:
             raise HTTPException(status_code=400, detail="You cannot bid on your own auction")
 
-        if user.id == auction.buyer_id:
+        if user.id == current_bid_winner.id:
             raise HTTPException(status_code=400, detail="You are already the highest bidder")
 
         # check if winner changed
-        if auction.buyer_id != user.id:
+        if current_bid_winner.id != user.id:
             # send notification to the previous winner
             await get_socket_manager().bid_winner_update_action(auction.bid.current_bid_winner_id)
 

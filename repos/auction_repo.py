@@ -105,25 +105,31 @@ def set_auction_status(auction: Auction, status: AuctionStatus) -> None:
 
 
 def is_user_bid_participant(session: Session, auction: Auction, user: User) -> bool:
+    if not object_session(auction) or not object_session(user):
+        raise ValueError("Both auction and user must be attached to a session")
+
     return session.query(BidParticipant).join(BidHistory, BidParticipant.bid_id == BidHistory.bid_id) \
         .filter(BidParticipant.bid_id == auction.bid.id, BidHistory.user_id == user.id).first() is not None
 
 
-# return current active auction id if user is participating in an active auction, else return 0
-def get_user_active_bid_participant(session: Session, user_id: int) -> int:
-    # first get all the auctions the user is participating in
-    user_bid_participant = session.query(BidParticipant).where(BidParticipant.user_id == user_id).all()
+# make sure the user is not participating in a different active auction
+def is_user_participating_in_different_active_bid(session: Session, auction: Auction, user: User) -> bool:
+    if not object_session(auction) or not object_session(user):
+        raise ValueError("Both auction and user must be attached to a session")
+
+    # first get all the auctions the user have ever participated in (even if they are finished)
+    user_bid_participant = session.query(BidParticipant).where(BidParticipant.user_id == user.id).all()
     if not user_bid_participant:
-        return 0
+        return False
 
-    # then count how many of them are still active
+    # iterate and check if the user is participating in a different active auction
     for bid in user_bid_participant:
-        auction = get_auction_by_bid_id(session, bid.bid_id)
-        if auction:
-            if not auction.is_auction_finished:
-                return auction.id
+        loop_auction = get_auction_by_bid_id(session, bid.bid_id)
+        if loop_auction:
+            if not loop_auction.is_auction_finished and loop_auction.id != auction.id:
+                return True
 
-    return 0
+    return False
 
 
 def create_bid_history_entry(session: Session, auction: Auction, user: User, amount: float) -> None:
