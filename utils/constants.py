@@ -4,6 +4,8 @@ from enum import Enum
 from loguru import logger
 
 DOMAIN_BASE = "https://charfair.me"
+STRIPE_PAYMENT_SUCCESS_URL = DOMAIN_BASE + '/wallet/payment/success'
+STRIPE_PAYMENT_CANCEL_URL = DOMAIN_BASE + '/wallet/payment/cancel'
 STRIPE_LISTENING_EVENTS = ['charge.succeeded', 'payment_intent.succeeded', 'payment_intent.created', 'checkout.session.expired']
 
 

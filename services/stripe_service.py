@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException
 
 import repos.user_repo
-from utils.constants import DOMAIN_BASE, TransactionStatus, STRIPE_LISTENING_EVENTS
+from utils.constants import DOMAIN_BASE, TransactionStatus, STRIPE_LISTENING_EVENTS, STRIPE_PAYMENT_SUCCESS_URL, \
+    STRIPE_PAYMENT_CANCEL_URL
 
 
 def create_payment_url(session: Session, amount: float, user_id: str):
@@ -30,8 +31,8 @@ def create_payment_url(session: Session, amount: float, user_id: str):
             }
         ],
         mode='payment',
-        success_url=DOMAIN_BASE + '/success.html',
-        cancel_url=DOMAIN_BASE + '/cancel.html',
+        success_url=STRIPE_PAYMENT_SUCCESS_URL,
+        cancel_url=STRIPE_PAYMENT_CANCEL_URL,
         automatic_tax={'enabled': False},
         metadata={'transaction_uuid': transaction_uuid},
         payment_intent_data={

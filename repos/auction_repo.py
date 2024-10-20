@@ -3,6 +3,7 @@ from sqlalchemy.orm import selectinload, Session, object_session
 from db_management.dto import CreateCategory
 from db_management.models import Auction, Product, Category, User, Bid, BidHistory, BidParticipant
 from utils.constants import AuctionStatus
+from utils.constants import fastapi_logger as logger
 
 
 def create_category(session: Session, category: CreateCategory) -> Category:
@@ -118,16 +119,24 @@ def is_user_participating_in_different_active_bid(session: Session, auction: Auc
         raise ValueError("Both auction and user must be attached to a session")
 
     # first get all the auctions the user have ever participated in (even if they are finished)
-    user_bid_participant = session.query(BidParticipant).where(BidParticipant.user_id == user.id).all()
-    if not user_bid_participant:
+    user_bid_participant_list = session.query(BidParticipant).where(BidParticipant.user_id == user.id).all()
+    if not user_bid_participant_list:
         return False
 
-    # iterate and check if the user is participating in a different active auction
-    for bid in user_bid_participant:
-        loop_auction = get_auction_by_bid_id(session, bid.bid_id)
-        if loop_auction:
-            if not loop_auction.is_auction_finished and loop_auction.id != auction.id:
-                return True
+    # iterate over all the auctions the user have ever participated in
+    for bid_participant in user_bid_participant_list:
+        loop_auction = get_auction_by_bid_id(session, bid_participant.bid_id)
+        if not loop_auction:
+            logger.warning(f"User {user.id} is participating in a non-existent auction {bid_participant.bid_id}")
+            continue
+
+        # skip the current auction
+        if loop_auction.id == auction.id:
+            continue
+
+        # check if the auction does not have finished yet
+        if not loop_auction.is_auction_finished:
+            return True
 
     return False
 

@@ -44,4 +44,4 @@ if __name__ == '__main__':
         # input("Click to rollback")
         # session.rollback()
 
-    # services.purcharse_service.place_bid(auction.id, user.id, 5.12345678)
+    # services.auction_service.place_bid(auction.id, user.id, 5.12345678)

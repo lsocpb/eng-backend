@@ -45,7 +45,7 @@ async def search_auctions(dto: dto.SearchAuctions, db: db_dependency):
 
 @router.put("", status_code=status.HTTP_201_CREATED)
 async def create_auction(auction: dto.CreateAuction, user: user_dependency, db: db_dependency):
-    services.purcharse_service.create_auction(db, auction, user['id'])
+    services.auction_service.create_auction(db, auction, user['id'])
     return {"message": "Auction created successfully"}
 
 
