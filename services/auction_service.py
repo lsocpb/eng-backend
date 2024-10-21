@@ -19,7 +19,8 @@ async def place_bid(session: Session, auction_id: int, user_id: int, amount: flo
     # round the amount to 2 decimal places
     amount = round(amount, 2)
 
-    with threading.Lock():  # lock to prevent bidding simultaneously
+    # lock to prevent bidding simultaneously
+    with threading.Lock():
         auction = repos.auction_repo.get_auction_by_id(session, auction_id)
         if auction is None:
             raise HTTPException(status_code=404, detail="Auction not found")

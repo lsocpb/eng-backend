@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from starlette import status
 
 from db_management.models import User
-from utils.constants import UserRole
+from utils.constants import UserRole, UserAccountType
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -41,6 +41,9 @@ def authenticate_user(username: str, password: str, db):
         return False
     if not verify_password(password, user.password_hash):
         return False
+    if user.account_type == UserAccountType.BUSINESS_UNVERIFIED:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Company account not verified, please contact support")
     return user
 
 

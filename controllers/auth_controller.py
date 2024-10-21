@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, APIRouter
@@ -7,10 +7,10 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 import response_models.auth_responses as auth
-from db_management.dto import CreateUserRequest
-from db_management.models import User, Address
-from response_models.auth_responses import hash_password, Token, authenticate_user, \
+from db_management.dto import PersonalRegisterForm, CompanyRegisterForm
+from response_models.auth_responses import Token, authenticate_user, \
     create_access_token
+from services.user_service import create_personal_account, create_company_account
 from utils.utils import old_get_db
 
 router = APIRouter(
@@ -21,34 +21,15 @@ router = APIRouter(
 db_dependency = Annotated[Session, Depends(old_get_db)]
 
 
-@router.post('/register', status_code=status.HTTP_201_CREATED)
-async def register(db: db_dependency,
-                   create_user_request: CreateUserRequest):
-    if not auth.validate_username(create_user_request.username):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail='Username must be between 3 and 20 characters')
-    if not auth.validate_password(create_user_request.password):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail='Password must be between 8 and 20 characters')
-    if not auth.validate_email(create_user_request.email):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail='Invalid email address')
+@router.post('/register/personal', status_code=status.HTTP_201_CREATED)
+async def register_personal_account(db: db_dependency, dto: PersonalRegisterForm):
+    create_personal_account(db, dto)
+    return {'message': 'User registered successfully'}
 
-    new_address = Address(**create_user_request.address.dict())
-    db.add(new_address)
-    db.flush()
 
-    create_user_model = User(
-        username=create_user_request.username,
-        password_hash=hash_password(create_user_request.password),
-        email=create_user_request.email,
-        last_login_date=datetime.now(),
-        address=new_address
-    )
-
-    db.add(create_user_model)
-    db.commit()
-    db.refresh(create_user_model)
+@router.post('/register/company', status_code=status.HTTP_201_CREATED)
+async def register_company_account(db: db_dependency, dto: CompanyRegisterForm):
+    create_company_account(db, dto)
     return {'message': 'User registered successfully'}
 
 

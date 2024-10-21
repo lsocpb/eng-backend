@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import List
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, FLOAT
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, FLOAT, func
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import relationship, mapped_column, Mapped
+from sqlalchemy.orm import relationship, mapped_column, Mapped, declared_attr
 
 from db_management.database import Base
 from utils.constants import *
@@ -48,6 +48,59 @@ class Address(Base):
             "city": self.city,
             "zip": self.zip
         }
+
+
+class Billing(Base):
+    __tablename__ = 'billing'
+    id = Column(Integer, primary_key=True)
+    billing_type = Column(String(50))
+
+    # Polymorphic discriminator
+    @declared_attr
+    def __mapper_args__(self):
+        return {
+            'polymorphic_identity': 'billing',
+            'polymorphic_on': self.billing_type
+        }
+
+
+class UserBilling(Billing):
+    __tablename__ = 'user_billing'
+    id = Column(Integer, ForeignKey('billing.id'), primary_key=True)
+    first_name = Column(String(255), nullable=False)
+    last_name = Column(String(255), nullable=False)
+    address = Column(String(255), nullable=False)
+    postal_code = Column(String(255), nullable=False)
+    city = Column(String(255), nullable=False)
+    country = Column(String(255), nullable=False)
+    phone_number = Column(String(255), nullable=False)
+
+    def __str__(self):
+        return f"UserBilling: [details: {self.address} {self.postal_code} {self.city} {self.country}]"
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'user_billing',
+    }
+
+
+class CompanyBilling(Billing):
+    __tablename__ = 'company_billing'
+    id = Column(Integer, ForeignKey('billing.id'), primary_key=True)
+    name = Column(String(255), nullable=False)
+    tax_id = Column(String(255), nullable=False)  # NIP
+    address = Column(String(255), nullable=False)
+    postal_code = Column(String(255), nullable=False)
+    city = Column(String(255), nullable=False)
+    country = Column(String(255), nullable=False)
+    phone_number = Column(String(255), nullable=False)
+    bank_account = Column(String(255), nullable=False)
+
+    def __str__(self):
+        return f"CompanyBilling: [name: {self.name} address: {self.address} {self.postal_code} {self.city} {self.country}]"
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'company_billing',
+    }
 
 
 class Product(Base):
@@ -138,7 +191,7 @@ class Auction(Base):
     product_id = Column(Integer, ForeignKey('product.id'), nullable=False)
     product = relationship('Product')
 
-    created_at = Column(DateTime(timezone=True), default=datetime.now, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.now)
     end_date = Column(DateTime, nullable=False)
 
     bid_id = Column(Integer, ForeignKey('bid.id'), nullable=True)
@@ -210,11 +263,15 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     username = Column(String(255), unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)
-    last_login_date = Column(DateTime, nullable=False)
+    last_login_date = Column(DateTime, nullable=False, default=datetime.now, server_default=func.now())
+    created_at = Column(DateTime, nullable=False, default=datetime.now, server_default=func.now())
     wallet_transactions: Mapped[List["WalletTransaction"]] = relationship("WalletTransaction", back_populates="user")
 
-    address_id: Mapped[int] = mapped_column(ForeignKey("address.id"), nullable=False)
-    address: Mapped["Address"] = relationship()
+    billing_details_id = Column(Integer, ForeignKey('billing.id'))
+    billing_details: Mapped["Billing"] = relationship("Billing", backref="user")
+
+    # address_id: Mapped[int] = mapped_column(ForeignKey("address.id"), nullable=False)
+    # address: Mapped["Address"] = relationship()
 
     profile_image_url = Column(String(255), nullable=True)
 

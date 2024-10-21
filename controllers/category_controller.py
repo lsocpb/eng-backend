@@ -34,6 +34,21 @@ async def get_category(category_id: str, db: db_dependency):
     else:
         raise HTTPException(status_code=400, detail="Invalid category id")
 
+# todo: replcae above code with below
+# @router.get("/id/{category_id}", status_code=status.HTTP_200_OK)
+# async def get_category(category_id: int, db: db_dependency):
+#     category = repos.auction_repo.get_category_by_id(db, category_id)
+#     if category is None:
+#         raise HTTPException(status_code=404, detail="Category not found")
+#
+#     return category.to_public()
+#
+#
+# @router.get("/all", status_code=status.HTTP_200_OK)
+# async def get_categories(db: db_dependency):
+#     categories = repos.auction_repo.get_categories(db)
+#     return {"categories": [category.to_public() for category in categories]}
+
 
 @router.put("", status_code=status.HTTP_201_CREATED)
 async def create_category(category: dto.CreateCategory, db: db_dependency):

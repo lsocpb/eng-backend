@@ -79,15 +79,56 @@ class PaymentCreate(BaseModel):
     amount: float = Field(ge=0.1, description="Amount to pay")
 
 
-class AddressRequestCreate(BaseModel):
-    street: str = Field(max_length=255)
-    city: str = Field(max_length=255)
-    zip: str = Field(max_length=255)
-
-
-class CreateUserRequest(BaseModel):
+class AccountDetails(BaseModel):
     username: str = Field(max_length=20)
     password: str = Field(max_length=32)
     email: str = Field(max_length=255)
-    phone: str = Field(max_length=20)
-    address: AddressRequestCreate = Field(description="Address details")
+
+    @field_validator("email")
+    def validate_email(cls, value):
+        if "@" not in value:
+            raise ValueError("Invalid email address")
+        return value
+
+    @field_validator("password")
+    def validate_password(cls, value):
+        if len(value) < 8 or len(value) > 20:
+            raise ValueError("Password must be between 8 and 20 characters")
+        return value
+
+    @field_validator("username")
+    def validate_username(cls, value):
+        if len(value) < 3 or len(value) > 20:
+            raise ValueError("Username must be between 3 and 20 characters")
+        return value
+
+
+class PersonalBilling(BaseModel):
+    first_name: str = Field(max_length=255)
+    last_name: str = Field(max_length=255)
+    address: str = Field(max_length=255)
+    postal_code: str = Field(max_length=255)
+    city: str = Field(max_length=255)
+    country: str = Field(max_length=255)
+    phone_number: str = Field(max_length=255)
+
+
+class CompanyBilling(BaseModel):
+    company_name: str = Field(max_length=255)
+    tax_id: str = Field(max_length=255)
+    address: str = Field(max_length=255)
+    postal_code: str = Field(max_length=255)
+    city: str = Field(max_length=255)
+    country: str = Field(max_length=255)
+    phone_number: str = Field(max_length=255)
+    bank_account: str = Field(max_length=255)
+
+
+class PersonalRegisterForm(BaseModel):
+    account_details: AccountDetails
+    billing_details: PersonalBilling
+
+
+class CompanyRegisterForm(BaseModel):
+    account_details: AccountDetails
+    billing_details: CompanyBilling

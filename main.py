@@ -14,6 +14,7 @@ from controllers import auth_controller, user_controller, category_controller, a
     file_upload_controller
 from db_management import models
 from db_management.database import engine
+# from tasks.auction_finished_task import scheduler
 from utils.constants import fastapi_logger as logger
 
 app = FastAPI()
@@ -50,6 +51,12 @@ cloudinary.config(
     api_secret=CLOUDINARY_API_SECRET,
     secure=True
 )
+
+
+# @app.on_event("shutdown")
+# def shutdown_event():
+#     scheduler.shutdown()
+
 
 # This is your test secret API key.
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")

@@ -93,6 +93,15 @@ async def get_user_sales(auth_user: user_dependency, db: db_dependency):
     return {"sales": [sale.to_public() for sale in user.products_sold]}
 
 
+@router.get("/wallet", status_code=status.HTTP_200_OK)
+async def get_wallet_balance(auth_user: user_dependency, db: db_dependency):
+    user = repos.user_repo.get_by_id(db, auth_user['id'])
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"balance_total": user.balance_total, "balance_reserved": user.balance_reserved}
+
+
 @router.post("/wallet/topup", status_code=status.HTTP_200_OK)
 async def create_payment(dto: db_management.dto.PaymentCreate, user: user_dependency, db: db_dependency):
     return {"payment_url": services.stripe_service.create_payment_url(db, dto.amount, user['id'])}
