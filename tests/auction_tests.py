@@ -19,6 +19,10 @@ def create_sample_auction() -> CreateAuction:
 
 
 def stats_test(session: Session):
+    user = repos.user_repo.get_by_id(session, 3)
+    if user is None:
+        raise ValueError("User not found")
+
     auction = repos.auction_repo.get_auction_by_id(session, 4)
     if auction is None:
         raise ValueError("Auction already exists")
@@ -31,31 +35,37 @@ def stats_test(session: Session):
     print(f"Total value of ended auctions: {get_total_value_of_ended_auctions(session)}")
 
 
+def clear_all_auctions(session: Session):
+    auctions = session.query(Auction).all()
+    for auction in auctions:
+        session.delete(auction)
+    session.commit()
+
+
 if __name__ == '__main__':
     from db_management.database import create_db, session_maker
 
     create_db()
     # get session
     with session_maker() as session:
-        # user = repos.user_repo.get_by_id(session, 3)
-        # if user is None:
-        #     raise ValueError("User not found")
-        #
-        companyBilling1 = CompanyBilling(company_details="company_details1")
-        companyBilling2 = CompanyBilling(company_details="company_details2")
-        userBilling1 = UserBilling(details="user_details1")
-        userBilling2 = UserBilling(details="user_details2")
+        clear_all_auctions(session)
 
-        u1 = repos.user_repo.get_by_id(session, 3)
-        u2 = repos.user_repo.get_by_id(session, 4)
-        u3 = repos.user_repo.get_by_id(session, 5)
-        u4 = repos.user_repo.get_by_id(session, 6)
+#
+# companyBilling1 = CompanyBilling(company_details="company_details1")
+# companyBilling2 = CompanyBilling(company_details="company_details2")
+# userBilling1 = UserBilling(details="user_details1")
+# userBilling2 = UserBilling(details="user_details2")
+#
+# u1 = repos.user_repo.get_by_id(session, 3)
+# u2 = repos.user_repo.get_by_id(session, 4)
+# u3 = repos.user_repo.get_by_id(session, 5)
+# u4 = repos.user_repo.get_by_id(session, 6)
+#
+# print(u1.billing_details)
+# print(u2.billing_details)
+# print(u3.billing_details)
+# print(u4.billing_details)
 
-        print(u1.billing_details)
-        print(u2.billing_details)
-        print(u3.billing_details)
-        print(u4.billing_details)
+# session.commit()
 
-        # session.commit()
-
-    # services.auction_service.place_bid(auction.id, user.id, 5.12345678)
+# services.auction_service.place_bid(auction.id, user.id, 5.12345678)

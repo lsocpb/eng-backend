@@ -30,26 +30,6 @@ class Category(Base):
         }
 
 
-class Address(Base):
-    __tablename__ = 'address'
-
-    id = Column(Integer, primary_key=True, index=True)
-    street = Column(String(255), nullable=False)
-    city = Column(String(255), nullable=False)
-    zip = Column(String(255), nullable=False)
-
-    def __str__(self):
-        return f"[Address: {self.street} {self.city} {self.zip}]"
-
-    def to_public(self) -> dict:
-        return {
-            "id": self.id,
-            "street": self.street,
-            "city": self.city,
-            "zip": self.zip
-        }
-
-
 class Billing(Base):
     __tablename__ = 'billing'
     id = Column(Integer, primary_key=True)
@@ -75,6 +55,18 @@ class UserBilling(Billing):
     country = Column(String(255), nullable=False)
     phone_number = Column(String(255), nullable=False)
 
+    def to_private(self) -> dict:
+        return {
+            "id": self.id,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "address": self.address,
+            "postal_code": self.postal_code,
+            "city": self.city,
+            "country": self.country,
+            "phone_number": self.phone_number,
+        }
+
     def __str__(self):
         return f"UserBilling: [details: {self.address} {self.postal_code} {self.city} {self.country}]"
 
@@ -94,6 +86,19 @@ class CompanyBilling(Billing):
     country = Column(String(255), nullable=False)
     phone_number = Column(String(255), nullable=False)
     bank_account = Column(String(255), nullable=False)
+
+    def to_private(self) -> dict:
+        return {
+            "id": self.id,
+            "company_name": self.name,
+            "tax_id": self.tax_id,
+            "address": self.address,
+            "postal_code": self.postal_code,
+            "city": self.city,
+            "country": self.country,
+            "phone_number": self.phone_number,
+            "bank_account": self.bank_account
+        }
 
     def __str__(self):
         return f"CompanyBilling: [name: {self.name} address: {self.address} {self.postal_code} {self.city} {self.country}]"
@@ -270,9 +275,6 @@ class User(Base):
     billing_details_id = Column(Integer, ForeignKey('billing.id'))
     billing_details: Mapped["Billing"] = relationship("Billing", backref="user")
 
-    # address_id: Mapped[int] = mapped_column(ForeignKey("address.id"), nullable=False)
-    # address: Mapped["Address"] = relationship()
-
     profile_image_url = Column(String(255), nullable=True)
 
     balance_total = Column(FLOAT, nullable=False, default=0.0)  # Available balance for withdraw / buy now
@@ -316,7 +318,7 @@ class User(Base):
             "last_login_date": self.last_login_date,
             "role": self.role,
             "account_type": self.account_type,
-            "address": self.address.to_public(),
+            "billing": self.billing_details.to_private(),
             "balance_total": self.balance_total,
             "balance_reserved": self.balance_reserved,
         }
