@@ -7,9 +7,10 @@ import db_management.dto
 import repos.auction_repo
 import repos.user_repo
 import services.email_service
+import tasks.auction_finished_task
 from db_management.models import Product, Auction, Bid
 from services.socketio_service import get_socket_manager, SocketManager
-from utils.constants import AuctionType, AuctionStatus
+from utils.constants import AuctionType, AuctionStatus, UserAccountType
 
 
 async def place_bid(session: Session, auction_id: int, user_id: int, amount: float) -> None:
@@ -113,7 +114,8 @@ def create_auction(session: Session, auction: db_management.dto.CreateAuction, u
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # todo: verify if user can place auction eg. verified user, etc.
+    if user.account_type != UserAccountType.BUSINESS:
+        raise HTTPException(status_code=400, detail="Only business accounts can create auctions")
 
     product = Product(
         name=auction.product.name,
@@ -143,6 +145,40 @@ def create_auction(session: Session, auction: db_management.dto.CreateAuction, u
 
     # real logic
     repos.auction_repo.create_auction(session, db_auction)
+
+    # reload tracked auctions
+    tasks.auction_finished_task.reload_tracked_auctions()
+
+    # save the transaction
+    session.commit()
+
+
+def bid_finished(session: Session, auction_id: int) -> None:
+    auction = repos.auction_repo.get_full_auction_by_id(session, auction_id)
+    if auction is None:
+        raise ValueError("Auction not found")
+
+    if auction.auction_type != AuctionType.BID:
+        raise ValueError("This auction is not a bid auction")
+
+    if auction.auction_status == AuctionStatus.INACTIVE:
+        raise ValueError("This auction is not active")
+
+    buyer = auction.bid.current_bid_winner
+
+    # set up auction buyer
+    if auction.auction_type == AuctionType.BID:
+        auction.buyer = buyer
+
+    # set up auction as finished
+    repos.auction_repo.set_auction_status(auction, AuctionStatus.INACTIVE)
+
+    # deduct the amount from the user's balance
+    repos.user_repo.deduct_total_balance(buyer, auction.bid.current_bid_value)
+
+    # send email to the buyer and seller
+    services.email_service.send_user_won_auction_email(buyer, auction)
+    services.email_service.send_seller_auction_completed_email(auction.seller.email, buyer, auction)
 
     # save the transaction
     session.commit()
