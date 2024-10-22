@@ -1,3 +1,5 @@
+from jinja2 import Template
+
 import repos.auction_repo
 import repos.user_repo
 from db_management.dto import CreateAuction, CreateAuctionProduct
@@ -42,13 +44,59 @@ def clear_all_auctions(session: Session):
     session.commit()
 
 
+def template_email():
+    #                 <p><strong>Street:</strong> {{ email_data.user.address.street }}</p>
+    #                 <p><strong>City:</strong> {{ email_data.user.address.city }}</p>
+    #                 <p><strong>State:</strong> {{ email_data.user.address.state }}</p>
+    #                 <p><strong>Postal Code:</strong> {{ email_data.user.address.postal_code }}</p>
+    #                 <p><strong>Country:</strong> {{ email_data.user.address.country }}</p>
+
+    # <p>Dear {{ email_data.user.username }},</p>
+    # <p><strong>Item Name:</strong> {{ email_data.auction.title }}</p>
+    # <p><strong>Final Price:</strong> {{ email_data.auction.current_price }}</p>
+    # <p><strong>End Date:</strong> {{ email_data.auction.end_date }}</p>
+    # <p><strong>Name:</strong> {{ email_data.user.username }}</p>
+    # <p><strong>Email:</strong> {{ email_data.user.email }}</p>
+    email_data = {
+        'user': {
+            'address': {
+                'street': '123 Main',
+                'city': 'New York',
+                'state': 'NY',
+                'postal_code': '10001',
+                'country': 'USA'
+            },
+            'username': 'John Doe',
+            'email': 'a@gmail.com',
+        },
+        'auction': {
+            'title': 'Luxury Watch',
+            'current_price': 1500.50,
+            'end_date': '2024-10-30'
+        }
+    }
+
+    f = open("../templates/auction_won.html", "r")
+    template = Template(f.read())
+
+    # Renderowanie szablonu z danymi
+    rendered_html = template.render(email_data=email_data)
+
+    print(rendered_html)
+    with open("auction_won_rendered.html", "w") as file:
+        file.write(rendered_html)
+
+
 if __name__ == '__main__':
     from db_management.database import create_db, session_maker
 
     create_db()
     # get session
     with session_maker() as session:
-        clear_all_auctions(session)
+        template_email()
+# create_sample_auction()
+# stats_test(session)
+# Tworzenie obiektu szablonu
 
 #
 # companyBilling1 = CompanyBilling(company_details="company_details1")

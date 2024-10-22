@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Congratulations - You Won the Auction! - Charfair Charity</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+
+        .header {
+            background-color: #27ae60;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .celebration {
+            font-size: 24px;
+            margin: 20px 0;
+            text-align: center;
+            color: #27ae60;
+        }
+
+        .content {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .info-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+
+        .next-steps {
+            background-color: #f1f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #27ae60;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .thank-you {
+            text-align: center;
+            font-size: 18px;
+            color: #27ae60;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🎉 Congratulations! You Won! 🎉</h1>
+    </div>
+
+    <div class="content">
+        <p>Dear {{ email_data.user.username }},</p>
+
+        <div class="celebration">
+            You are the winner of the auction!
+        </div>
+
+        <div class="info-section">
+            <div class="info-title">Your Winning Item</div>
+            <p><strong>Item Name:</strong> {{ email_data.auction.title }}</p>
+            <p><strong>Your Winning Bid:</strong> {{ email_data.auction.current_price }}</p>
+            <p><strong>Auction End Date:</strong> {{ email_data.auction.end_date }}</p>
+        </div>
+
+        <div class="info-section">
+            <div class="info-title">Shipping Details</div>
+            <p>Your item will be shipped to:</p>
+            <p>{{ email_data.user.username }}</p>
+            <p>{{ email_data.user.address.street }}</p>
+            <p>{{ email_data.user.address.city }}, {{ email_data.user.address.state }} {{ email_data.user.address.postal_code }}</p>
+            <p>{{ email_data.user.address.country }}</p>
+        </div>
+
+        <div class="next-steps">
+            <div class="info-title">Next Steps</div>
+            <ol>
+                <li>Your payment of {{ email_data.auction.current_price }} has been automatically processed from your
+                    account balance.
+                </li>
+                <li>We notified the seller about your winning. Now it is his turn
+                    to contact you and deliver the product.
+                </li>
+                <li>As our policy, company have maximum 31 business days to get a long with you
+                </li>
+            </ol>
+        </div>
+
+        <div class="info-section">
+            <div class="info-title">Your Account Balance</div>
+            <p><strong>Remaining Balance:</strong> {{ email_data.user.get_current_balance }}</p>
+            <p><strong>Reserved Balance:</strong> {{ email_data.user.balance_reserved }}</p>
+        </div>
+
+        <div class="thank-you">
+            Thank you for participating in our charity auction! Your contribution helps make a difference.
+        </div>
+
+        <p>If you have any questions about your winning item or the delivery process, our support team is here to
+            help.</p>
+
+        <a href="{{ support_url }}" class="button">Contact Support</a>
+    </div>
+
+    <div class="footer">
+        <p>This is an automated message from Charfair Charity</p>
+        <p>© 2024 Charfair Charity. All rights reserved.</p>
+        <p>Follow us on social media for more charity auctions and updates!</p>
+    </div>
+</div>
+</body>
+</html>

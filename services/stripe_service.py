@@ -49,6 +49,7 @@ def create_payment_url(session: Session, amount: float, user_id: str):
 
 
 def stripe_payment_webhook(session: Session, raw_data: str):
+    # todo: add validation of the webhook signature
     try:
         event = stripe.Event.construct_from(
             json.loads(raw_data), stripe.api_key

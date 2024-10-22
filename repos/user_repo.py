@@ -6,7 +6,6 @@ from db_management.models import User, WalletTransaction
 
 def get_by_id(session: Session, user_id: int) -> User:
     return session.query(User).where(User.id == user_id).options(
-        selectinload(User.address),
         selectinload(User.products_bought),
         selectinload(User.products_sold),
         selectinload(User.billing_details)
