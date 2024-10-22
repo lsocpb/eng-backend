@@ -38,6 +38,7 @@ def deduct_total_balance(user: User, amount: float) -> None:
         raise ValueError("Insufficient balance")
 
     user.balance_total -= amount
+    user.balance_reserved = 0
 
 
 def create_wallet_transaction(session: Session, user: User, amount: float, uuid: str, checkout_session_id: str) -> None:

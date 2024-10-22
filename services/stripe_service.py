@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException
 
 import repos.user_repo
-from utils.constants import DOMAIN_BASE, TransactionStatus, STRIPE_LISTENING_EVENTS, STRIPE_PAYMENT_SUCCESS_URL, \
+from utils.constants import TransactionStatus, STRIPE_LISTENING_EVENTS, STRIPE_PAYMENT_SUCCESS_URL, \
     STRIPE_PAYMENT_CANCEL_URL
 
 

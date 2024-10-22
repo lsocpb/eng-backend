@@ -59,6 +59,10 @@ def get_full_auction_by_id(session: Session, auction_id: int) -> Auction | None:
     ).where(Auction.id == auction_id).first()
 
 
+def get_all_auctions(session: Session) -> list[Auction] | None:
+    return session.query(Auction).all()
+
+
 def get_auction_by_bid_id(session: Session, bid_id: int) -> Auction | None:
     return session.query(Auction).where(Auction.bid_id == bid_id).first()
 

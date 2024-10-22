@@ -1,19 +1,45 @@
+import threading
+from datetime import datetime
+
+from apscheduler.schedulers.background import BackgroundScheduler
+
+import repos.auction_repo
+import services.auction_service
+from db_management.database import session_maker
+from utils.constants import fastapi_logger as logger, AuctionType, AuctionStatus
 
 # Task to check if an auction has ended
-def check_auctions():
-    now = datetime.now(pytz.UTC)
-    for auction in auctions:
-        if auction["status"] == "active" and auction["end_time"] <= now:
-            auction["status"] = "ended"
-            # If there's a winner, send an email
-            if auction["winner"]:
-                print(f"Auction {auction['id']} ended, sending email to {auction['winner']}")
-                # You can use BackgroundTasks or an async function to send email
-                background_tasks.add_task(send_winner_email, auction["winner"])
+tracked_auctions = {}  # <auction_id>: <end_time>
+lock = threading.Lock()
 
-# Set up APScheduler
+
+# reload all tracked auctions
+def reload_tracked_auctions():
+    with lock:
+        with session_maker() as session:
+            auctions = repos.auction_repo.get_all_auctions(session)
+            for auction in auctions:
+                if auction.auction_type == AuctionType.BUY_NOW:
+                    continue
+                if not auction.auction_status == AuctionStatus.ACTIVE:
+                    continue
+
+                tracked_auctions[auction.id] = auction.end_date
+            logger.trace(f"Reloaded {len(tracked_auctions)} tracked auctions")
+
+
+def check_auctions():
+    # prevent checking if auctions are reloading
+    with lock:
+        for auction_id in tracked_auctions:
+            logger.trace(
+                f"Checking auction {auction_id} it expires at {tracked_auctions[auction_id]} (left: {tracked_auctions[auction_id] - datetime.now()})")
+            if tracked_auctions[auction_id] <= datetime.now():
+                logger.info(f"Auction {auction_id} has ended")
+                with session_maker() as session:
+                    services.auction_service.bid_finished(session, auction_id)
+                del tracked_auctions[auction_id]
+
+
 scheduler = BackgroundScheduler()
 scheduler.add_job(check_auctions, 'interval', seconds=60)  # Check every minute
-scheduler.start()
-
-# Shut down the scheduler when exiting the app

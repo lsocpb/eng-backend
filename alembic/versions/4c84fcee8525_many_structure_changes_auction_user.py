@@ -1,4 +1,4 @@
-"""many structure changes auction/user
+"""many structure changes auction/buyer
 
 Revision ID: 4c84fcee8525
 Revises: c3c259482ec3
@@ -23,14 +23,14 @@ def upgrade() -> None:
     op.add_column('auction', sa.Column('auction_type', sa.Enum('BUY_NOW', 'BID', name='auctiontype'), nullable=False))
     op.add_column('auction', sa.Column('quantity', sa.Integer(), nullable=False))
     op.add_column('auction', sa.Column('buyer_id', sa.Integer(), nullable=True))
-    op.create_foreign_key(None, 'auction', 'user', ['buyer_id'], ['id'])
+    op.create_foreign_key(None, 'auction', 'buyer', ['buyer_id'], ['id'])
     op.drop_column('auction', 'role')
     op.drop_column('auction', 'bid_available')
     op.drop_column('auction', 'buy_now_available')
     op.add_column('bid', sa.Column('current_bid_winner_id', sa.Integer(), nullable=False))
     op.drop_constraint('bid_ibfk_1', 'bid', type_='foreignkey')
     op.drop_constraint('bid_ibfk_2', 'bid', type_='foreignkey')
-    op.create_foreign_key(None, 'bid', 'user', ['current_bid_winner_id'], ['id'])
+    op.create_foreign_key(None, 'bid', 'buyer', ['current_bid_winner_id'], ['id'])
     op.drop_column('bid', 'product_id')
     op.drop_column('bid', 'higher_bidder_id')
     op.drop_constraint('product_ibfk_2', 'product', type_='foreignkey')
@@ -56,12 +56,12 @@ def downgrade() -> None:
     op.add_column('product', sa.Column('seller_id', mysql.INTEGER(), autoincrement=False, nullable=False))
     op.add_column('product', sa.Column('status', mysql.VARCHAR(length=255), nullable=False))
     op.add_column('product', sa.Column('created_at', mysql.DATETIME(), nullable=False))
-    op.create_foreign_key('product_ibfk_3', 'product', 'user', ['buyer_id'], ['id'])
-    op.create_foreign_key('product_ibfk_2', 'product', 'user', ['seller_id'], ['id'])
+    op.create_foreign_key('product_ibfk_3', 'product', 'buyer', ['buyer_id'], ['id'])
+    op.create_foreign_key('product_ibfk_2', 'product', 'buyer', ['seller_id'], ['id'])
     op.add_column('bid', sa.Column('higher_bidder_id', mysql.INTEGER(), autoincrement=False, nullable=False))
     op.add_column('bid', sa.Column('product_id', mysql.INTEGER(), autoincrement=False, nullable=False))
     op.drop_constraint(None, 'bid', type_='foreignkey')
-    op.create_foreign_key('bid_ibfk_2', 'bid', 'user', ['higher_bidder_id'], ['id'])
+    op.create_foreign_key('bid_ibfk_2', 'bid', 'buyer', ['higher_bidder_id'], ['id'])
     op.create_foreign_key('bid_ibfk_1', 'bid', 'product', ['product_id'], ['id'])
     op.drop_column('bid', 'current_bid_winner_id')
     op.add_column('auction', sa.Column('buy_now_available', mysql.TINYINT(display_width=1), autoincrement=False, nullable=True))

@@ -1,4 +1,4 @@
-"""added phone to user billing
+"""added phone to buyer billing
 
 Revision ID: 1bcce9324f21
 Revises: b83bbb6c168e

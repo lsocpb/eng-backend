@@ -109,6 +109,7 @@ class PersonalBilling(BaseModel):
     address: str = Field(max_length=255)
     postal_code: str = Field(max_length=255)
     city: str = Field(max_length=255)
+    state: str = Field(max_length=255)
     country: str = Field(max_length=255)
     phone_number: str = Field(max_length=255)
 
@@ -119,6 +120,7 @@ class CompanyBilling(BaseModel):
     address: str = Field(max_length=255)
     postal_code: str = Field(max_length=255)
     city: str = Field(max_length=255)
+    state: str = Field(max_length=255)
     country: str = Field(max_length=255)
     phone_number: str = Field(max_length=255)
     bank_account: str = Field(max_length=255)

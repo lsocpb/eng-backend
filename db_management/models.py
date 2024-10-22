@@ -52,6 +52,7 @@ class UserBilling(Billing):
     address = Column(String(255), nullable=False)
     postal_code = Column(String(255), nullable=False)
     city = Column(String(255), nullable=False)
+    state = Column(String(255), nullable=False)
     country = Column(String(255), nullable=False)
     phone_number = Column(String(255), nullable=False)
 
@@ -83,6 +84,7 @@ class CompanyBilling(Billing):
     address = Column(String(255), nullable=False)
     postal_code = Column(String(255), nullable=False)
     city = Column(String(255), nullable=False)
+    state = Column(String(255), nullable=False)
     country = Column(String(255), nullable=False)
     phone_number = Column(String(255), nullable=False)
     bank_account = Column(String(255), nullable=False)

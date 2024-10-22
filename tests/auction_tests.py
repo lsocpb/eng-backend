@@ -1,10 +1,18 @@
+import os
+
 from jinja2 import Template
+from sendgrid import Mail, SendGridAPIClient
+
+# change the path to the root of the project
+os.chdir("..")
 
 import repos.auction_repo
 import repos.user_repo
+from controllers.user_controller import SENDGRID_FROM_EMAIL, SENDGRID_API_KEY
 from db_management.dto import CreateAuction, CreateAuctionProduct
 from db_management.models import *
 from repos.stats_repo import *
+from response_models.user_responses import EmailSchema
 from utils.constants import AuctionType
 
 
@@ -45,20 +53,20 @@ def clear_all_auctions(session: Session):
 
 
 def template_email():
-    #                 <p><strong>Street:</strong> {{ email_data.user.address.street }}</p>
-    #                 <p><strong>City:</strong> {{ email_data.user.address.city }}</p>
-    #                 <p><strong>State:</strong> {{ email_data.user.address.state }}</p>
-    #                 <p><strong>Postal Code:</strong> {{ email_data.user.address.postal_code }}</p>
-    #                 <p><strong>Country:</strong> {{ email_data.user.address.country }}</p>
+    #                 <p><strong>Street:</strong> {{ email_data.buyer.address.street }}</p>
+    #                 <p><strong>City:</strong> {{ email_data.buyer.address.city }}</p>
+    #                 <p><strong>State:</strong> {{ email_data.buyer.address.state }}</p>
+    #                 <p><strong>Postal Code:</strong> {{ email_data.buyer.address.postal_code }}</p>
+    #                 <p><strong>Country:</strong> {{ email_data.buyer.address.country }}</p>
 
-    # <p>Dear {{ email_data.user.username }},</p>
+    # <p>Dear {{ email_data.buyer.username }},</p>
     # <p><strong>Item Name:</strong> {{ email_data.auction.title }}</p>
     # <p><strong>Final Price:</strong> {{ email_data.auction.current_price }}</p>
     # <p><strong>End Date:</strong> {{ email_data.auction.end_date }}</p>
-    # <p><strong>Name:</strong> {{ email_data.user.username }}</p>
-    # <p><strong>Email:</strong> {{ email_data.user.email }}</p>
+    # <p><strong>Name:</strong> {{ email_data.buyer.username }}</p>
+    # <p><strong>Email:</strong> {{ email_data.buyer.email }}</p>
     email_data = {
-        'user': {
+        'buyer': {
             'address': {
                 'street': '123 Main',
                 'city': 'New York',
@@ -87,13 +95,54 @@ def template_email():
         file.write(rendered_html)
 
 
+def email_test():
+    email_data = EmailSchema(name="John Doe", email="test@gmail.com", message="Hello, this is a test message",
+                             to="kacper.gc.15@gmail.com")
+    try:
+        message = Mail(
+            from_email=SENDGRID_FROM_EMAIL,
+            to_emails="kacper.gc.15@gmail.com",
+            subject=f"New message from {email_data.name}",
+            html_content=f"""
+                    <strong>Name:</strong> {email_data.name}<br>
+                    <strong>Email:</strong> {email_data.email}<br>
+                    <br>
+                    <strong>Message:</strong><br>
+                    {email_data.message}
+                    """
+        )
+
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+        print(response)
+        print(response.status_code)
+        return {"message": "Email sent successfully"}
+    except Exception as e:
+        raise ValueError(str(e))
+
+
+def email_test2():
+    user = repos.user_repo.get_by_id(session, 16)
+    if user is None:
+        raise ValueError("User not found")
+
+    auction = repos.auction_repo.get_full_auction_by_id(session, 15)
+    if auction is None:
+        raise ValueError("Auction already exists")
+
+    print(auction.to_public())
+    # services.email_service.send_seller_auction_completed_email(user, auction)
+
+
 if __name__ == '__main__':
+
     from db_management.database import create_db, session_maker
 
     create_db()
     # get session
     with session_maker() as session:
-        template_email()
+        email_test2()
+        # template_email()
 # create_sample_auction()
 # stats_test(session)
 # Tworzenie obiektu szablonu
@@ -116,4 +165,4 @@ if __name__ == '__main__':
 
 # session.commit()
 
-# services.auction_service.place_bid(auction.id, user.id, 5.12345678)
+# services.auction_service.place_bid(auction.id, buyer.id, 5.12345678)

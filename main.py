@@ -14,7 +14,7 @@ from controllers import auth_controller, user_controller, category_controller, a
     file_upload_controller
 from db_management import models
 from db_management.database import engine
-# from tasks.auction_finished_task import scheduler
+from tasks.auction_finished_task import scheduler, reload_tracked_auctions, check_auctions
 from utils.constants import fastapi_logger as logger
 
 app = FastAPI()
@@ -37,6 +37,9 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
+app.add_event_handler('startup', lambda: (reload_tracked_auctions(), check_auctions(), scheduler.start()))
+app.add_event_handler('shutdown', lambda: (scheduler.shutdown()))
+
 models.Base.metadata.create_all(bind=engine)
 
 load_dotenv()
@@ -52,13 +55,6 @@ cloudinary.config(
     secure=True
 )
 
-
-# @app.on_event("shutdown")
-# def shutdown_event():
-#     scheduler.shutdown()
-
-
-# This is your test secret API key.
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 

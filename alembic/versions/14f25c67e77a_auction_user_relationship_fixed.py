@@ -1,4 +1,4 @@
-"""auction/user relationship fixed
+"""auction/buyer relationship fixed
 
 Revision ID: 14f25c67e77a
 Revises: 4c84fcee8525
