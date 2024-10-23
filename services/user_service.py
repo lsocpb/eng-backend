@@ -14,6 +14,7 @@ def create_personal_account(session: Session, dto: PersonalRegisterForm) -> None
         postal_code=dto.billing_details.postal_code,
         city=dto.billing_details.city,
         country=dto.billing_details.country,
+        state=dto.billing_details.state,
         phone_number=dto.billing_details.phone_number
     )
 
@@ -37,6 +38,7 @@ def create_company_account(session: Session, dto: CompanyRegisterForm) -> None:
         postal_code=dto.billing_details.postal_code,
         city=dto.billing_details.city,
         country=dto.billing_details.country,
+        state=dto.billing_details.state,
         phone_number=dto.billing_details.phone_number,
         bank_account=dto.billing_details.bank_account
     )
