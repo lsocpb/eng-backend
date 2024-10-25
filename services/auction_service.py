@@ -49,13 +49,15 @@ async def place_bid(session: Session, auction_id: int, user_id: int, amount: flo
         if user.id == auction.seller_id:
             raise HTTPException(status_code=400, detail="You cannot bid on your own auction")
 
-        if user.id == current_bid_winner.id:
-            raise HTTPException(status_code=400, detail="You are already the highest bidder")
+        # check if there are any bids
+        if current_bid_winner:
+            if user.id == current_bid_winner.id:
+                raise HTTPException(status_code=400, detail="You are already the highest bidder")
 
-        # check if winner changed
-        if current_bid_winner.id != user.id:
-            # send notification to the previous winner
-            await get_socket_manager().bid_winner_update_action(auction.bid.current_bid_winner_id)
+            # check if winner has been changed
+            if current_bid_winner.id != user.id:
+                # send notification to the previous winner
+                await get_socket_manager().bid_winner_update_action(auction.bid.current_bid_winner_id)
 
         # real logic
         repos.auction_repo.add_bid_participant(session, auction, user)
