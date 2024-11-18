@@ -249,8 +249,12 @@ class Auction(Base):
             "buyer": self.buyer.to_public() if self.buyer else None,
             "is_auction_finished": self.is_auction_finished,
             "is_new": (datetime.now() - self.created_at).days < 7,
-            "days_left": (self.end_date - datetime.now()).days,
         }
+
+        if self.is_auction_finished:
+            d["days_left"] = 0
+        else:
+            d["days_left"] = (self.end_date - datetime.now()).days
 
         if self.auction_type == AuctionType.BID:
             d["bid"] = self.bid.to_public()

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 import repos.auction_repo
+import repos.stats_repo
 import repos.user_repo
 import services.auction_service
 from db_management import dto
@@ -74,3 +75,8 @@ async def get_auctions_by_category(category_id: int, db: db_dependency):
     if not auctions:
         raise HTTPException(status_code=404, detail="No auctions found")
     return {"auctions": [auction.to_public() for auction in auctions]}
+
+
+@router.get("/stats/{auction_id}", status_code=status.HTTP_200_OK)
+async def get_auctions_by_category(auction_id: int, db: db_dependency):
+    return services.auction_service.auction_stats(db, auction_id)

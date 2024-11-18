@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 import db_management.dto
 import repos.auction_repo
+import repos.stats_repo
 import repos.user_repo
 import services.email_service
 import tasks.auction_finished_task
@@ -191,3 +192,21 @@ def bid_finished(session: Session, auction_id: int) -> None:
 
     # save the transaction
     session.commit()
+
+
+def auction_stats(session: Session, auction_id: int) -> dict:
+    auction = repos.auction_repo.get_full_auction_by_id(session, auction_id)
+    if auction is None:
+        raise HTTPException(status_code=404, detail="Auction not found")
+
+    participants_count = repos.stats_repo.get_auction_bid_participants_count(session, auction.bid_id)
+    total_bids = repos.stats_repo.get_auction_total_bids(session, auction.bid_id)
+    highest_bid = repos.stats_repo.get_auction_highest_bid(session, auction.bid_id)
+    lowest_bid = repos.stats_repo.get_auction_lowest_bid(session, auction.bid_id)
+
+    return {
+        "participants_count": participants_count,
+        "total_bids": total_bids,
+        "highest_bid": highest_bid,
+        "lowest_bid": lowest_bid
+    }

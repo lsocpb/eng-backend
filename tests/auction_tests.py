@@ -28,21 +28,23 @@ def create_sample_auction() -> CreateAuction:
     return auction
 
 
-def stats_test(session: Session):
-    user = repos.user_repo.get_by_id(session, 3)
-    if user is None:
-        raise ValueError("User not found")
-
-    auction = repos.auction_repo.get_auction_by_id(session, 4)
+def auction_stats_test(session: Session):
+    auction = repos.auction_repo.get_full_auction_by_id(session, 20)
     if auction is None:
         raise ValueError("Auction already exists")
 
-    print(f"Auction: {auction.product.name} User: {user.username} User selling: {user.products_sold}")
+    print(f"Auction seller: {auction.seller.username} Product: {auction.product.name}")
 
-    print(f"Registered users: {get_registered_useres_count(session)}")
-    print(f"Auction count: {get_auction_count(session)}")
-    print(f"Total bids: {get_total_bids_count(session)}")
-    print(f"Total value of ended auctions: {get_total_value_of_ended_auctions(session)}")
+    # print(f"Registered users: {get_registered_useres_count(session)}")
+    # print(f"Auction count: {get_auction_count(session)}")
+    # print(f"Total bids: {get_total_bids_count(session)}")
+    # print(f"Total value of ended auctions: {get_total_value_of_ended_auctions(session)}")
+
+    participants_count = get_auction_bid_participants_count(session, auction.bid_id)
+    total_bids = get_auction_total_bids(session, auction.bid_id)
+    highest_bid = get_auction_highest_bid(session, auction.bid_id)
+    lowest_bid = get_auction_lowest_bid(session, auction.bid_id)
+    print(f"Participants count: {participants_count} Total bids: {total_bids} Highest bid: {highest_bid} Lowest bid: {lowest_bid}")
 
 
 def clear_all_auctions(session: Session):
@@ -135,13 +137,12 @@ def email_test2():
 
 
 if __name__ == '__main__':
-
     from db_management.database import create_db, session_maker
 
     create_db()
     # get session
     with session_maker() as session:
-        email_test2()
+        auction_stats_test(session)
         # template_email()
 # create_sample_auction()
 # stats_test(session)
