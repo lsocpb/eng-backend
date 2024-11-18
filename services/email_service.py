@@ -1,7 +1,8 @@
+import os
+
 from jinja2 import Template
 from sendgrid import Mail, SendGridAPIClient
 
-from controllers.user_controller import SENDGRID_FROM_EMAIL, SENDGRID_API_KEY
 from db_management.models import User, Auction
 from utils.constants import fastapi_logger as logger
 
@@ -10,6 +11,28 @@ with open("templates/auction_won.html", "r", encoding='utf-8') as file:
 
 with open("templates/auction_completed.html", "r", encoding='utf-8') as file:
     auction_ended_template = file.read()
+
+
+def _send_email(to_email: str, subject: str, html_content: str) -> None:
+    try:
+        message = Mail(
+            from_email=os.getenv("SENDGRID_FROM_EMAIL"),
+            to_emails=to_email,
+            subject=subject,
+            html_content=html_content
+        )
+
+        client = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
+        response = client.send(message)
+
+        if response.status_code != 202:
+            logger.error(
+                f"Failed to send email, body {response.body} status code {response.status_code} headers {response.headers}")
+        else:
+            logger.trace(f"Email sent to {to_email}")
+
+    except Exception as e:
+        logger.error(f"Failed to send email, error {str(e)}")
 
 
 def send_user_won_auction_email(buyer: User, auction: Auction) -> None:
@@ -39,24 +62,7 @@ def send_user_won_auction_email(buyer: User, auction: Auction) -> None:
     # Renderowanie szablonu z danymi
     rendered_html = template.render(email_data=email_data)
 
-    try:
-        message = Mail(
-            from_email=SENDGRID_FROM_EMAIL,
-            to_emails=buyer.email,
-            subject=f"Charfair - You won an auction!",
-            html_content=rendered_html
-        )
-
-        client = SendGridAPIClient(SENDGRID_API_KEY)
-        response = client.send(message)
-
-        if response.status_code != 202:
-            logger.error(
-                f"Failed to send user won auction, body {response.body} status code {response.status_code} headers {response.headers}")
-        else:
-            logger.trace(f"send_user_won_auction_email: email sent to {buyer.email}")
-    except Exception as e:
-        logger.error(f"Failed to send user won auction, error {str(e)}")
+    _send_email(buyer.email, f"Charfair - You won an auction!", rendered_html)
 
 
 def send_seller_auction_completed_email(seller_email: str, buyer: User, auction: Auction) -> None:
@@ -84,22 +90,4 @@ def send_seller_auction_completed_email(seller_email: str, buyer: User, auction:
     # Renderowanie szablonu z danymi
     rendered_html = template.render(email_data=email_data)
 
-    try:
-        message = Mail(
-            from_email=SENDGRID_FROM_EMAIL,
-            to_emails=seller_email,
-            subject=f"Charfair - Your auction has ended!",
-            html_content=rendered_html
-        )
-
-        client = SendGridAPIClient(SENDGRID_API_KEY)
-        response = client.send(message)
-
-        if response.status_code != 202:
-            logger.error(
-                f"Failed to send seller auction completed, body {response.body} status code {response.status_code} headers {response.headers}")
-        else:
-            logger.trace(f"send_seller_auction_completed_email: email sent to {seller_email}")
-
-    except Exception as e:
-        logger.error(f"Failed to send seller auction completed, error {str(e)}")
+    _send_email(seller_email, f"Charfair - Your auction has ended!", rendered_html)

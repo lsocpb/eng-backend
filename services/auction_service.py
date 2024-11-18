@@ -11,6 +11,7 @@ import tasks.auction_finished_task
 from db_management.models import Product, Auction, Bid
 from services.socketio_service import get_socket_manager, SocketManager
 from utils.constants import AuctionType, AuctionStatus, UserAccountType
+from utils.constants import fastapi_logger as logger
 
 
 async def place_bid(session: Session, auction_id: int, user_id: int, amount: float) -> None:
@@ -166,36 +167,11 @@ def bid_finished(session: Session, auction_id: int) -> None:
     if auction.auction_status == AuctionStatus.INACTIVE:
         raise ValueError("This auction is not active")
 
-    buyer = auction.bid.current_bid_winner
-
-    # set up auction buyer
-    if auction.auction_type == AuctionType.BID:
-        auction.buyer = buyer
-
-    # set up auction as finished
-    repos.auction_repo.set_auction_status(auction, AuctionStatus.INACTIVE)
-
-    # deduct the amount from the user's balance
-    repos.user_repo.deduct_total_balance(buyer, auction.bid.current_bid_value)
-
-    # send email to the buyer and seller
-    services.email_service.send_user_won_auction_email(buyer, auction)
-    services.email_service.send_seller_auction_completed_email(auction.seller.email, buyer, auction)
-
-    # save the transaction
-    session.commit()
-
-
-def bid_finished(session: Session, auction_id: int) -> None:
-    auction = repos.auction_repo.get_full_auction_by_id(session, auction_id)
-    if auction is None:
-        raise ValueError("Auction not found")
-
-    if auction.auction_type != AuctionType.BID:
-        raise ValueError("This auction is not a bid auction")
-
-    if auction.auction_status == AuctionStatus.INACTIVE:
-        raise ValueError("This auction is not active")
+    if auction.bid.current_bid_winner is None:
+        logger.info(f"Auction {auction_id} has ended without any bids")
+        repos.auction_repo.set_auction_status(auction, AuctionStatus.INACTIVE)
+        session.commit()
+        return
 
     buyer = auction.bid.current_bid_winner
 

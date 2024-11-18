@@ -8,7 +8,7 @@ os.chdir("..")
 
 import repos.auction_repo
 import repos.user_repo
-from controllers.user_controller import SENDGRID_FROM_EMAIL, SENDGRID_API_KEY
+# from controllers.user_controller import SENDGRID_FROM_EMAIL, SENDGRID_API_KEY
 from db_management.dto import CreateAuction, CreateAuctionProduct
 from db_management.models import *
 from repos.stats_repo import *
@@ -100,7 +100,7 @@ def email_test():
                              to="kacper.gc.15@gmail.com")
     try:
         message = Mail(
-            from_email=SENDGRID_FROM_EMAIL,
+            from_email=os.getenv("SENDGRID_FROM_EMAIL"),
             to_emails="kacper.gc.15@gmail.com",
             subject=f"New message from {email_data.name}",
             html_content=f"""
@@ -112,7 +112,7 @@ def email_test():
                     """
         )
 
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        sg = SendGridAPIClient(os.getenv("SENDGRID_API_KEY"))
         response = sg.send(message)
         print(response)
         print(response.status_code)

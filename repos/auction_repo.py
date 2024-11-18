@@ -77,14 +77,14 @@ def get_latest_auctions(session: Session, amount: int = 5):
     ).order_by(Auction.created_at.desc()).limit(amount).all()
 
 
-def get_auction_list_by_category(session: Session, category_id: int, limit: int = 5):
+def get_auction_list_by_category(session: Session, category_id: int):
     return session.query(Auction).options(
         selectinload(Auction.product).selectinload(Product.category),
         selectinload(Auction.bid).selectinload(Bid.bidders).selectinload(BidParticipant.user),
         selectinload(Auction.bid).selectinload(Bid.current_bid_winner),
         selectinload(Auction.seller),
         selectinload(Auction.buyer)
-    ).join(Product).filter(Product.category_id == category_id).limit(limit).all()
+    ).join(Product).filter(Product.category_id == category_id).all()
 
 
 def search_auctions_by_name(session: Session, search: str):

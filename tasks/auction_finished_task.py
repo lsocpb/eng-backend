@@ -31,7 +31,7 @@ def reload_tracked_auctions():
 def check_auctions():
     # prevent checking if auctions are reloading
     with lock:
-        for auction_id in tracked_auctions:
+        for auction_id in list(tracked_auctions.keys()):
             logger.trace(
                 f"Checking auction {auction_id} it expires at {tracked_auctions[auction_id]} (left: {tracked_auctions[auction_id] - datetime.now()})")
             if tracked_auctions[auction_id] <= datetime.now():

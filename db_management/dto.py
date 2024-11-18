@@ -134,3 +134,10 @@ class PersonalRegisterForm(BaseModel):
 class CompanyRegisterForm(BaseModel):
     account_details: AccountDetails
     billing_details: CompanyBilling
+
+
+class BuyNowStats(BaseModel):
+    auction_id: int = Field(description="ID of auction")
+    user_id: int = Field(description="ID of user")
+    auction_duration: int = Field(description="Duration of auction in minutes")
+
