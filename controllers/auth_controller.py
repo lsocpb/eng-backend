@@ -40,7 +40,7 @@ async def login_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Dep
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail='Could not validate credentials')
-    token = create_access_token(user.username, user.id, user.role, timedelta(minutes=6000))
+    token = create_access_token(user.username, user.id, user.role, timedelta(minutes=6000), user.account_type)
 
     return {'access_token': token, 'token_type': 'bearer'}
 
