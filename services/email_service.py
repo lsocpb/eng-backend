@@ -6,6 +6,8 @@ from sendgrid import Mail, SendGridAPIClient
 from db_management.models import User, Auction
 from utils.constants import fastapi_logger as logger
 
+send_real_emails = True
+
 with open("templates/auction_won.html", "r", encoding='utf-8') as file:
     auction_won_template = file.read()
 
@@ -14,6 +16,9 @@ with open("templates/auction_completed.html", "r", encoding='utf-8') as file:
 
 
 def _send_email(to_email: str, subject: str, html_content: str) -> None:
+    if not send_real_emails:
+        logger.info(f"Email not sent to {to_email} because send_real_emails is set to False")
+        return
     try:
         message = Mail(
             from_email=os.getenv("SENDGRID_FROM_EMAIL"),
@@ -91,3 +96,10 @@ def send_seller_auction_completed_email(seller_email: str, buyer: User, auction:
     rendered_html = template.render(email_data=email_data)
 
     _send_email(seller_email, f"Charfair - Your auction has ended!", rendered_html)
+
+
+def send_password_reset_email(email: str, reset_link: str) -> None:
+    rendered_html = f"Click <a href='{reset_link}'>here</a> to reset your password<br>If your email client does not support " \
+                    f"clicking the link, copy and paste the following URL into your browser: {reset_link} "
+
+    _send_email(email, f"Charfair - Password reset", rendered_html)

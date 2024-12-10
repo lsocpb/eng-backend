@@ -10,7 +10,7 @@ import services.auction_service
 from db_management import dto
 from db_management.database import get_db
 from db_management.dto import PlaceBid
-from response_models.auth_responses import validate_jwt
+from response_models.auth_responses import validate_auth_jwt
 
 router = APIRouter(
     prefix="/auction",
@@ -18,7 +18,7 @@ router = APIRouter(
 )
 
 db_dependency = Annotated[Session, Depends(get_db)]
-user_dependency = Annotated[dict, Depends(validate_jwt)]
+user_dependency = Annotated[dict, Depends(validate_auth_jwt)]
 
 
 @router.get("/id/{auction_id}", status_code=status.HTTP_200_OK)
@@ -78,5 +78,5 @@ async def get_auctions_by_category(category_id: int, db: db_dependency):
 
 
 @router.get("/stats/{auction_id}", status_code=status.HTTP_200_OK)
-async def get_auctions_by_category(auction_id: int, db: db_dependency):
+async def get_auctions_stats(auction_id: int, db: db_dependency):
     return services.auction_service.auction_stats(db, auction_id)

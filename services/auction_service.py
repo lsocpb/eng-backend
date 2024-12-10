@@ -76,7 +76,7 @@ async def place_bid(session: Session, auction_id: int, user_id: int, amount: flo
         session.commit()
 
 
-def buy_now(session: Session, auction_id: int, user_id: int) -> None:
+def buy_now(session: Session, auction_id: int, user_id: int, send_email: bool = True) -> None:
     user = repos.user_repo.get_by_id(session, user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -106,8 +106,10 @@ def buy_now(session: Session, auction_id: int, user_id: int) -> None:
         repos.user_repo.deduct_total_balance(user, auction.buy_now_price)
 
         # send email to the buyer and seller
-        services.email_service.send_user_won_auction_email(user, auction)
-        services.email_service.send_seller_auction_completed_email(auction.seller.email, user, auction)
+        # if send_email:
+        # todo: dont work with buy now
+        # services.email_service.send_user_won_auction_email(user, auction)
+        # services.email_service.send_seller_auction_completed_email(auction.seller.email, user, auction)
 
         # save the transaction
         session.commit()

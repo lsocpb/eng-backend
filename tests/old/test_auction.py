@@ -4,7 +4,7 @@ from jinja2 import Template
 from sendgrid import Mail, SendGridAPIClient
 
 # change the path to the root of the project
-os.chdir("..")
+os.chdir("../..")
 
 import repos.auction_repo
 import repos.user_repo
@@ -44,7 +44,8 @@ def auction_stats_test(session: Session):
     total_bids = get_auction_total_bids(session, auction.bid_id)
     highest_bid = get_auction_highest_bid(session, auction.bid_id)
     lowest_bid = get_auction_lowest_bid(session, auction.bid_id)
-    print(f"Participants count: {participants_count} Total bids: {total_bids} Highest bid: {highest_bid} Lowest bid: {lowest_bid}")
+    print(
+        f"Participants count: {participants_count} Total bids: {total_bids} Highest bid: {highest_bid} Lowest bid: {lowest_bid}")
 
 
 def clear_all_auctions(session: Session):
@@ -86,7 +87,7 @@ def template_email():
         }
     }
 
-    f = open("../templates/auction_won.html", "r")
+    f = open("../../templates/auction_won.html", "r")
     template = Template(f.read())
 
     # Renderowanie szablonu z danymi

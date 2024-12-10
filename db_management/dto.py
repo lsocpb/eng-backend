@@ -141,3 +141,16 @@ class BuyNowStats(BaseModel):
     user_id: int = Field(description="ID of user")
     auction_duration: int = Field(description="Duration of auction in minutes")
 
+
+class PasswordChange(BaseModel):
+    old_password: str = Field(max_length=32)
+    new_password: str = Field(max_length=32)
+
+
+class PasswordRecoveryByToken(BaseModel):
+    token: str = Field(max_length=512)
+    new_password: str = Field(max_length=32)
+
+
+class PasswordRecoveryStart(BaseModel):
+    email: str = Field(max_length=255)

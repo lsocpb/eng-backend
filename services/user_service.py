@@ -6,7 +6,7 @@ from response_models.auth_responses import hash_password
 from utils.constants import UserAccountType
 
 
-def create_personal_account(session: Session, dto: PersonalRegisterForm) -> None:
+def create_personal_account(session: Session, dto: PersonalRegisterForm) -> User:
     billing_details = UserBilling(
         first_name=dto.billing_details.first_name,
         last_name=dto.billing_details.last_name,
@@ -28,9 +28,11 @@ def create_personal_account(session: Session, dto: PersonalRegisterForm) -> None
 
     session.add(user)
     session.commit()
+    session.refresh(user)
+    return user
 
 
-def create_company_account(session: Session, dto: CompanyRegisterForm) -> None:
+def create_company_account(session: Session, dto: CompanyRegisterForm) -> User:
     billing_details = CompanyBilling(
         name=dto.billing_details.company_name,
         tax_id=dto.billing_details.tax_id,
@@ -53,3 +55,5 @@ def create_company_account(session: Session, dto: CompanyRegisterForm) -> None:
 
     session.add(user)
     session.commit()
+    session.refresh(user)
+    return user

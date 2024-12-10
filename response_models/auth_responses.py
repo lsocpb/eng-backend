@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from typing import Annotated
 
 from dotenv import load_dotenv
-from fastapi import Depends, HTTPException, Header
+from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -27,6 +27,11 @@ class Token(BaseModel):
     token_type: str
 
 
+class ResetPasswordToken(BaseModel):
+    user_id: int
+    exp: datetime
+
+
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -47,16 +52,19 @@ def authenticate_user(username: str, password: str, db):
     return user
 
 
-# fixme: use pydantic model for user
-def create_access_token(username: str, user_id: int, role: UserRole, expires_delta: timedelta,
-                        account_type: UserAccountType):
-    encode = {'sub': username, 'id': user_id, 'role': role.value, 'account_type': account_type.value}
+def create_access_token(user: User, expires_delta: timedelta = timedelta(hours=12)):
+    encode = {'sub': user.username, 'id': user.id, 'role': user.role.value, 'account_type': user.account_type.value}
     expires = datetime.utcnow() + expires_delta
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-async def validate_jwt(token: Annotated[str, Depends(oauth2_bearer)]):
+def create_reset_password_token(user_id: int, expires_delta: timedelta = timedelta(minutes=30)):
+    token_base = ResetPasswordToken(user_id=user_id, exp=datetime.utcnow() + expires_delta)
+    return jwt.encode(token_base.dict(), SECRET_KEY, algorithm=ALGORITHM)
+
+
+async def validate_auth_jwt(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get('sub')
@@ -70,9 +78,17 @@ async def validate_jwt(token: Annotated[str, Depends(oauth2_bearer)]):
                             detail='Could not validate user')
 
 
-async def validate_internal_auth(Authorization: str = Header()):
-    if Authorization != internal_auth_token:
-        raise HTTPException(status_code=400, detail="Unauthorized")
+def validate_reset_pwd_jwt(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get('id')
+        if user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail='Could not validate credentials')
+        return {'id': user_id}
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='Could not validate user')
 
 
 def get_current_user(token: str = Depends(oauth2_bearer)):
@@ -100,28 +116,3 @@ def admin_required(current_user: dict = Depends(get_current_user)):
             detail="Insufficient permissions"
         )
     return current_user
-
-
-def validate_username(username: str):
-    if len(username) < 3:
-        return False
-    if len(username) > 20:
-        return False
-    return True
-
-
-def validate_password(password: str):
-    if len(password) < 8:
-        return False
-    if len(password) > 40:
-        return False
-    return True
-
-
-def validate_email(email: str):
-    if len(email) < 5:
-        return False
-    if len(email) > 50:
-        return False
-    # todo regex
-    return True

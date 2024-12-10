@@ -7,7 +7,7 @@ import repos.auction_repo
 import repos.user_repo
 from db_management import dto
 from db_management.database import get_db
-from response_models.auth_responses import validate_jwt
+from response_models.auth_responses import validate_auth_jwt
 
 router = APIRouter(
     prefix="/category",
@@ -15,7 +15,7 @@ router = APIRouter(
 )
 
 db_dependency = Annotated[Session, Depends(get_db)]
-user_dependency = Depends(validate_jwt)
+user_dependency = Depends(validate_auth_jwt)
 
 
 @router.get("/id/{category_id}", status_code=status.HTTP_200_OK)
@@ -35,11 +35,13 @@ async def get_categories(db: db_dependency):
 
 @router.put("", status_code=status.HTTP_201_CREATED)
 async def create_category(category: dto.CreateCategory, db: db_dependency):
-    repos.auction_repo.create_category(db, category)
+    if not repos.auction_repo.create_category(db, category):
+        raise HTTPException(status_code=400, detail="Category already exists")
     return {"message": "Category added successfully"}
 
 
 @router.delete("", status_code=status.HTTP_200_OK)
 async def delete_category(dto: dto.DeleteCategory, db: db_dependency):
-    repos.auction_repo.delete_category(db, dto.category_id)
+    if not repos.auction_repo.delete_category(db, dto.category_id):
+        raise HTTPException(status_code=404, detail="Category not found")
     return {"message": "Category deleted successfully"}

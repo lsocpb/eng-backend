@@ -6,7 +6,10 @@ from utils.constants import AuctionStatus
 from utils.constants import fastapi_logger as logger
 
 
-def create_category(session: Session, category: CreateCategory) -> Category:
+def create_category(session: Session, category: CreateCategory) -> Category | None:
+    if get_category_by_name(session, category.name) is not None:
+        return None
+
     db_category = Category(
         name=category.name,
         description=category.description,
@@ -22,13 +25,21 @@ def get_category_by_id(session: Session, category_id: int) -> Category | None:
     return session.query(Category).where(Category.id == category_id).first()
 
 
+def get_category_by_name(session: Session, category_name: str) -> Category | None:
+    return session.query(Category).where(Category.name == category_name).first()
+
+
 def get_categories(session: Session) -> list[Category]:
     return session.query(Category).all()
 
 
-def delete_category(session: Session, category_id: int) -> None:
+def delete_category(session: Session, category_id: int) -> bool:
     category = session.query(Category).where(Category.id == category_id).first()
+    if category is None:
+        return False
     session.delete(category)
+    session.commit()
+    return True
 
 
 def create_auction(session: Session, auction: Auction):

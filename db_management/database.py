@@ -11,7 +11,8 @@ from sqlalchemy.orm import sessionmaker
 load_dotenv()
 DB_URL = os.getenv("DB_URL")
 
-engine = create_engine(DB_URL, echo=False, pool_pre_ping=True, pool_recycle=3600, isolation_level="AUTOCOMMIT")  # reconect after 1 hour
+engine = create_engine(DB_URL, echo=False, pool_pre_ping=True, pool_recycle=3600,
+                       isolation_level="AUTOCOMMIT")  # reconect after 1 hour
 session_maker = sessionmaker(bind=engine, expire_on_commit=False)
 
 

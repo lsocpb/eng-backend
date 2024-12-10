@@ -32,7 +32,7 @@ async def disconnect():
     print('disconnected from server')
 
 
-async def main():
+async def run_test():
     load_dotenv()
 
     await sio.connect(url='https://ws.charfair.me', headers={'Authorization': os.getenv('SOCKETIO_CLINET_JWT')})
@@ -43,4 +43,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(run_test())

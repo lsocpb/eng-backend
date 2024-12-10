@@ -69,6 +69,10 @@ async def start_socketio():
     await web._run_app(services.socketio_service.app)
 
 
+def start_socketio_sync():
+    web.run_app(services.socketio_service.app, host='0.0.0.0', port=8001)
+
+
 async def start():
     await asyncio.gather(start_socketio())
 

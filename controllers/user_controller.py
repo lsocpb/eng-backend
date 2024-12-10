@@ -9,7 +9,9 @@ import repos.user_repo
 import services.file_upload_service
 import services.stripe_service
 from db_management.database import get_db
-from response_models.auth_responses import validate_jwt
+from response_models.auth_responses import validate_auth_jwt
+from response_models.auth_responses import verify_password
+from utils.constants import UserAccountType
 
 router = APIRouter(
     prefix="/user",
@@ -17,7 +19,7 @@ router = APIRouter(
 )
 
 db_dependency = Annotated[Session, Depends(get_db)]
-user_dependency = Annotated[dict, Depends(validate_jwt)]
+user_dependency = Annotated[dict, Depends(validate_auth_jwt)]
 
 
 @router.get("/me", status_code=status.HTTP_200_OK)
@@ -30,6 +32,19 @@ async def get_user_info(db_user: user_dependency, db: db_dependency):
         raise HTTPException(status_code=404, detail="User not found")
 
     return user.to_private()
+
+
+@router.put("/change_password", status_code=status.HTTP_200_OK)
+async def change_password(dto: db_management.dto.PasswordChange, db_user: user_dependency, db: db_dependency):
+    user = repos.user_repo.get_by_id(db, db_user['id'])
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not verify_password(dto.old_password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Old password is incorrect")
+
+    repos.user_repo.change_user_password(db, user, dto.new_password)
+    return {"message": "Password changed successfully"}
 
 
 @router.post("/upload_profile_image", status_code=status.HTTP_200_OK)
@@ -49,6 +64,9 @@ async def get_user_purchases(auth_user: user_dependency, db: db_dependency):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
+    if user.account_type != UserAccountType.PERSONAL:
+        raise HTTPException(status_code=403, detail="Only personal accounts can view purchases history")
+
     return {"purchases": [purchase.to_public() for purchase in user.products_bought]}
 
 
@@ -57,6 +75,9 @@ async def get_user_sales(auth_user: user_dependency, db: db_dependency):
     user = repos.user_repo.get_by_id(db, auth_user['id'])
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
+
+    if user.account_type != UserAccountType.BUSINESS:
+        raise HTTPException(status_code=403, detail="Only business accounts can view sales history")
 
     return {"sales": [sale.to_public() for sale in user.products_sold]}
 
