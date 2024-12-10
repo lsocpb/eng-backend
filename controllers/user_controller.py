@@ -34,7 +34,7 @@ async def get_user_info(db_user: user_dependency, db: db_dependency):
     return user.to_private()
 
 
-@router.put("/change_password", status_code=status.HTTP_200_OK)
+@router.post("/change_password", status_code=status.HTTP_200_OK)
 async def change_password(dto: db_management.dto.PasswordChange, db_user: user_dependency, db: db_dependency):
     user = repos.user_repo.get_by_id(db, db_user['id'])
     if user is None:
